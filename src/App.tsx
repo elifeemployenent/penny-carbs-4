@@ -13,6 +13,7 @@ import Auth from "./pages/Auth";
 import Menu from "./pages/Menu";
 import ItemDetail from "./pages/ItemDetail";
 import Cart from "./pages/Cart";
+import Checkout from "./pages/Checkout";
 import Orders from "./pages/Orders";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
@@ -60,6 +61,7 @@ const App = () => (
                 <Route path="/menu/:serviceType" element={<Menu />} />
                 <Route path="/item/:itemId" element={<ItemDetail />} />
                 <Route path="/cart" element={<Cart />} />
+                <Route path="/checkout" element={<Checkout />} />
                 <Route path="/orders" element={<Orders />} />
                 <Route path="/profile" element={<Profile />} />
                 

@@ -23,7 +23,9 @@ import {
   Edit2, 
   Trash2,
   Shield,
-  ShieldCheck
+  ShieldCheck,
+  Loader2,
+  UserSearch
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import AdminNavbar from '@/components/admin/AdminNavbar';
@@ -45,6 +47,12 @@ interface AdminUser {
   };
 }
 
+interface SearchedUser {
+  user_id: string;
+  name: string;
+  mobile_number: string;
+}
+
 const AdminAdmins: React.FC = () => {
   const navigate = useNavigate();
   const { role } = useAuth();
@@ -56,6 +64,13 @@ const AdminAdmins: React.FC = () => {
   // Dialog state
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingAdmin, setEditingAdmin] = useState<AdminUser | null>(null);
+  
+  // User search state
+  const [mobileSearch, setMobileSearch] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchResults, setSearchResults] = useState<SearchedUser[]>([]);
+  const [selectedUser, setSelectedUser] = useState<SearchedUser | null>(null);
+  
   const [formData, setFormData] = useState({
     user_id: '',
     can_manage_items: false,
@@ -113,9 +128,63 @@ const AdminAdmins: React.FC = () => {
     }
   };
 
+  const handleSearchByMobile = async () => {
+    if (!mobileSearch.trim() || mobileSearch.length < 3) {
+      toast({
+        title: 'Enter Mobile Number',
+        description: 'Please enter at least 3 digits to search',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsSearching(true);
+    setSearchResults([]);
+    setSelectedUser(null);
+
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('user_id, name, mobile_number')
+        .ilike('mobile_number', `%${mobileSearch}%`)
+        .limit(10);
+
+      if (error) throw error;
+
+      setSearchResults(data || []);
+      
+      if (data?.length === 0) {
+        toast({
+          title: 'No Users Found',
+          description: 'No users found with that mobile number',
+        });
+      }
+    } catch (error) {
+      console.error('Error searching users:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to search users',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleSelectUser = (user: SearchedUser) => {
+    setSelectedUser(user);
+    setFormData(prev => ({ ...prev, user_id: user.user_id }));
+    setSearchResults([]);
+  };
+
   const handleOpenDialog = (admin?: AdminUser) => {
     if (admin) {
       setEditingAdmin(admin);
+      setSelectedUser(admin.profile ? {
+        user_id: admin.user_id,
+        name: admin.profile.name,
+        mobile_number: admin.profile.mobile_number,
+      } : null);
       setFormData({
         user_id: admin.user_id,
         can_manage_items: admin.can_manage_items,
@@ -128,6 +197,9 @@ const AdminAdmins: React.FC = () => {
       });
     } else {
       setEditingAdmin(null);
+      setSelectedUser(null);
+      setMobileSearch('');
+      setSearchResults([]);
       setFormData({
         user_id: '',
         can_manage_items: false,
@@ -367,17 +439,56 @@ const AdminAdmins: React.FC = () => {
           
           <div className="space-y-4 py-4">
             {!editingAdmin && (
-              <div className="space-y-2">
-                <Label htmlFor="user_id">User ID *</Label>
-                <Input
-                  id="user_id"
-                  value={formData.user_id}
-                  onChange={(e) => setFormData({ ...formData, user_id: e.target.value })}
-                  placeholder="Enter user UUID"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Enter the UUID of an existing user to grant admin permissions
-                </p>
+              <div className="space-y-3">
+                <Label>Search User by Mobile Number *</Label>
+                <div className="flex gap-2">
+                  <Input
+                    value={mobileSearch}
+                    onChange={(e) => setMobileSearch(e.target.value)}
+                    placeholder="Enter mobile number..."
+                    onKeyDown={(e) => e.key === 'Enter' && handleSearchByMobile()}
+                  />
+                  <Button 
+                    type="button" 
+                    onClick={handleSearchByMobile}
+                    disabled={isSearching}
+                  >
+                    {isSearching ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <UserSearch className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+
+                {/* Search Results */}
+                {searchResults.length > 0 && (
+                  <div className="space-y-2 rounded-md border p-2">
+                    <p className="text-xs text-muted-foreground">Select a user:</p>
+                    {searchResults.map((user) => (
+                      <div
+                        key={user.user_id}
+                        className="flex cursor-pointer items-center justify-between rounded-md p-2 hover:bg-muted"
+                        onClick={() => handleSelectUser(user)}
+                      >
+                        <div>
+                          <p className="font-medium">{user.name}</p>
+                          <p className="text-sm text-muted-foreground">{user.mobile_number}</p>
+                        </div>
+                        <Button variant="ghost" size="sm">Select</Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Selected User */}
+                {selectedUser && (
+                  <div className="rounded-md border border-primary bg-primary/5 p-3">
+                    <p className="text-sm font-medium text-primary">Selected User:</p>
+                    <p className="font-semibold">{selectedUser.name}</p>
+                    <p className="text-sm text-muted-foreground">{selectedUser.mobile_number}</p>
+                  </div>
+                )}
               </div>
             )}
 

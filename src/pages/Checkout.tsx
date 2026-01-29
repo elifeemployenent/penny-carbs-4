@@ -1,0 +1,287 @@
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { useCart } from '@/contexts/CartContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { useLocation } from '@/contexts/LocationContext';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Separator } from '@/components/ui/separator';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { ArrowLeft, MapPin, ShoppingBag, Loader2 } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
+
+const Checkout: React.FC = () => {
+  const navigate = useNavigate();
+  const { items, totalAmount, clearCart } = useCart();
+  const { user, profile } = useAuth();
+  const { panchayats, selectedPanchayat, selectedWardNumber, setSelectedPanchayat, setSelectedWardNumber, getWardsForPanchayat } = useLocation();
+
+  const [deliveryAddress, setDeliveryAddress] = useState('');
+  const [deliveryInstructions, setDeliveryInstructions] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Determine service type from cart items (assume all items have same service type)
+  const serviceType = items[0]?.food_item?.service_type || 'cloud_kitchen';
+
+  if (!user) {
+    navigate('/auth');
+    return null;
+  }
+
+  if (items.length === 0) {
+    return (
+      <div className="min-h-screen bg-background">
+        <header className="sticky top-0 z-50 flex h-14 items-center gap-3 border-b bg-card px-4">
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <h1 className="font-display text-lg font-semibold">Checkout</h1>
+        </header>
+
+        <div className="flex flex-col items-center justify-center py-20">
+          <ShoppingBag className="h-16 w-16 text-muted-foreground" />
+          <h2 className="mt-4 text-xl font-semibold">Your cart is empty</h2>
+          <p className="mt-2 text-center text-muted-foreground">
+            Add some items to proceed with checkout
+          </p>
+          <Button className="mt-6" onClick={() => navigate('/')}>
+            Browse Menu
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  const handlePlaceOrder = async () => {
+    if (!selectedPanchayat || !selectedWardNumber) {
+      toast({
+        title: 'Location Required',
+        description: 'Please select your panchayat and ward',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!deliveryAddress.trim()) {
+      toast({
+        title: 'Address Required',
+        description: 'Please enter your delivery address',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      // Generate order number
+      const orderNumber = `PC${Date.now()}`;
+
+      // Create the order
+      const { data: order, error: orderError } = await supabase
+        .from('orders')
+        .insert([{
+          order_number: orderNumber,
+          customer_id: user.id,
+          service_type: serviceType as 'indoor_events' | 'cloud_kitchen' | 'homemade',
+          total_amount: totalAmount,
+          panchayat_id: selectedPanchayat.id,
+          ward_number: selectedWardNumber,
+          delivery_address: deliveryAddress,
+          delivery_instructions: deliveryInstructions || null,
+        }])
+        .select()
+        .single();
+
+      if (orderError) throw orderError;
+
+      // Create order items
+      const orderItems = items.map(item => ({
+        order_id: order.id,
+        food_item_id: item.food_item_id,
+        quantity: item.quantity,
+        unit_price: item.food_item?.price || 0,
+        total_price: (item.food_item?.price || 0) * item.quantity,
+      }));
+
+      const { error: itemsError } = await supabase
+        .from('order_items')
+        .insert(orderItems);
+
+      if (itemsError) throw itemsError;
+
+      // Clear the cart
+      await clearCart();
+
+      toast({
+        title: 'Order Placed!',
+        description: `Your order #${order.order_number} has been placed successfully`,
+      });
+
+      navigate('/orders');
+    } catch (error) {
+      console.error('Error placing order:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to place order. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const deliveryFee = 0; // Free delivery for now
+  const grandTotal = totalAmount + deliveryFee;
+
+  return (
+    <div className="min-h-screen bg-background pb-32">
+      <header className="sticky top-0 z-50 flex h-14 items-center gap-3 border-b bg-card px-4">
+        <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
+        <h1 className="font-display text-lg font-semibold">Checkout</h1>
+      </header>
+
+      <main className="p-4 space-y-4">
+        {/* Delivery Location */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <MapPin className="h-4 w-4" />
+              Delivery Location
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="panchayat">Panchayat *</Label>
+                <Select
+                  value={selectedPanchayat?.id || ''}
+                  onValueChange={(value) => {
+                    const panchayat = panchayats.find(p => p.id === value);
+                    setSelectedPanchayat(panchayat || null);
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Panchayat" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {panchayats.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="ward">Ward Number *</Label>
+                <Select
+                  value={selectedWardNumber?.toString() || ''}
+                  onValueChange={(value) => setSelectedWardNumber(parseInt(value, 10))}
+                  disabled={!selectedPanchayat}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Ward" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {selectedPanchayat &&
+                      getWardsForPanchayat(selectedPanchayat).map((ward) => (
+                        <SelectItem key={ward} value={ward.toString()}>
+                          Ward {ward}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="address">Delivery Address *</Label>
+              <Textarea
+                id="address"
+                placeholder="Enter your complete delivery address"
+                value={deliveryAddress}
+                onChange={(e) => setDeliveryAddress(e.target.value)}
+                rows={3}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="instructions">Delivery Instructions (Optional)</Label>
+              <Input
+                id="instructions"
+                placeholder="Any special delivery instructions..."
+                value={deliveryInstructions}
+                onChange={(e) => setDeliveryInstructions(e.target.value)}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Order Summary */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Order Summary</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {items.map((item) => (
+              <div key={item.id} className="flex justify-between text-sm">
+                <span>
+                  {item.food_item?.name} × {item.quantity}
+                </span>
+                <span>₹{((item.food_item?.price || 0) * item.quantity).toFixed(0)}</span>
+              </div>
+            ))}
+            <Separator />
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Subtotal</span>
+              <span>₹{totalAmount.toFixed(0)}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Delivery Fee</span>
+              <span className="text-green-600">FREE</span>
+            </div>
+            <Separator />
+            <div className="flex justify-between font-semibold">
+              <span>Total</span>
+              <span className="text-lg">₹{grandTotal.toFixed(0)}</span>
+            </div>
+          </CardContent>
+        </Card>
+      </main>
+
+      {/* Place Order Button */}
+      <div className="fixed bottom-0 left-0 right-0 border-t bg-card p-4 shadow-lg">
+        <Button
+          className="w-full h-12 text-base"
+          onClick={handlePlaceOrder}
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Placing Order...
+            </>
+          ) : (
+            `Place Order • ₹${grandTotal.toFixed(0)}`
+          )}
+        </Button>
+      </div>
+    </div>
+  );
+};
+
+export default Checkout;
