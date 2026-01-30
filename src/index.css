@@ -127,6 +127,23 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+
+  /* Gradient text utilities */
+  .text-gradient-events {
+    @apply bg-gradient-to-r from-purple-500 via-pink-500 to-rose-500 bg-clip-text text-transparent;
+  }
+
+  .text-gradient-kitchen {
+    @apply bg-gradient-to-r from-blue-500 via-cyan-500 to-teal-500 bg-clip-text text-transparent;
+  }
+
+  .text-gradient-homemade {
+    @apply bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 bg-clip-text text-transparent;
+  }
+
+  .text-gradient-primary {
+    @apply bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 bg-clip-text text-transparent;
+  }
 }
 
 /* Custom animations */

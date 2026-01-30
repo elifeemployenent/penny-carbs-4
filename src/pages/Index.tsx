@@ -27,16 +27,19 @@ const Index: React.FC = () => {
         <PopularItems 
           serviceType="indoor_events" 
           title="🎉 Popular for Events" 
+          gradientClass="text-gradient-events"
         />
         
         <PopularItems 
           serviceType="cloud_kitchen" 
           title="👨‍🍳 Most Ordered from Cloud Kitchen" 
+          gradientClass="text-gradient-kitchen"
         />
         
         <PopularItems 
           serviceType="homemade" 
           title="🏠 Homemade Favorites" 
+          gradientClass="text-gradient-homemade"
         />
       </main>
 
