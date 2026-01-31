@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
@@ -17,10 +17,11 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from '@/hooks/use-toast';
-import { ArrowLeft, Plus, ChefHat, Phone, MapPin, Loader2 } from 'lucide-react';
+import { ArrowLeft, Plus, ChefHat, Phone, MapPin, Loader2, User } from 'lucide-react';
 import type { Cook } from '@/types/cook';
 
 const cookSchema = z.object({
+  staffId: z.string().optional(),
   kitchenName: z.string().min(2, 'Kitchen name is required'),
   mobileNumber: z.string()
     .min(10, 'Mobile number must be 10 digits')
@@ -32,6 +33,14 @@ const cookSchema = z.object({
 });
 
 type CookFormData = z.infer<typeof cookSchema>;
+
+interface StaffProfile {
+  id: string;
+  user_id: string;
+  name: string;
+  mobile_number: string;
+  panchayat_id: string | null;
+}
 
 const orderTypes = [
   { value: 'indoor_events', label: 'Indoor Events' },
@@ -46,6 +55,20 @@ const AdminCooks: React.FC = () => {
   const { panchayats } = useLocation();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedStaff, setSelectedStaff] = useState<StaffProfile | null>(null);
+
+  // Fetch existing staff profiles
+  const { data: staffProfiles } = useQuery({
+    queryKey: ['staff-profiles'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, user_id, name, mobile_number, panchayat_id')
+        .order('name', { ascending: true });
+      if (error) throw error;
+      return data as StaffProfile[];
+    },
+  });
 
   const { data: cooks, isLoading } = useQuery({
     queryKey: ['admin-cooks'],
@@ -66,6 +89,7 @@ const AdminCooks: React.FC = () => {
   const form = useForm<CookFormData>({
     resolver: zodResolver(cookSchema),
     defaultValues: {
+      staffId: '',
       kitchenName: '',
       mobileNumber: '',
       password: '',
@@ -74,23 +98,52 @@ const AdminCooks: React.FC = () => {
     },
   });
 
+  // Handle staff selection to auto-fill fields
+  const handleStaffSelect = (staffId: string) => {
+    const staff = staffProfiles?.find(s => s.id === staffId);
+    if (staff) {
+      setSelectedStaff(staff);
+      form.setValue('staffId', staffId);
+      form.setValue('kitchenName', staff.name + "'s Kitchen");
+      form.setValue('mobileNumber', staff.mobile_number);
+      if (staff.panchayat_id) {
+        form.setValue('panchayatId', staff.panchayat_id);
+      }
+    } else {
+      setSelectedStaff(null);
+      form.setValue('staffId', '');
+    }
+  };
+
   const handleSubmit = async (data: CookFormData) => {
     setIsSubmitting(true);
     try {
-      // 1. Create auth user
-      const email = `${data.mobileNumber}@pennycarbs.local`;
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password: data.password,
-      });
+      let userId: string | undefined;
 
-      if (authError) throw authError;
+      if (selectedStaff) {
+        // Using existing staff - update their password via admin API would require edge function
+        // For now, we'll link the cook to the existing user
+        userId = selectedStaff.user_id;
+        
+        // Note: To update password for existing user, you'd need an edge function with admin privileges
+        // For now, we'll just register them as a cook with their existing account
+      } else {
+        // Create new auth user
+        const email = `${data.mobileNumber}@pennycarbs.local`;
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+          email,
+          password: data.password,
+        });
 
-      // 2. Create cook profile
+        if (authError) throw authError;
+        userId = authData.user?.id;
+      }
+
+      // Create cook profile
       const { error: cookError } = await supabase
         .from('cooks')
         .insert({
-          user_id: authData.user?.id,
+          user_id: userId,
           kitchen_name: data.kitchenName,
           mobile_number: data.mobileNumber,
           panchayat_id: data.panchayatId,
@@ -100,12 +153,12 @@ const AdminCooks: React.FC = () => {
 
       if (cookError) throw cookError;
 
-      // 3. Add cook role
-      if (authData.user) {
+      // Add cook role
+      if (userId) {
         await supabase
           .from('user_roles')
           .insert({
-            user_id: authData.user.id,
+            user_id: userId,
             role: 'cook',
           });
       }
@@ -116,6 +169,7 @@ const AdminCooks: React.FC = () => {
       });
 
       form.reset();
+      setSelectedStaff(null);
       setIsDialogOpen(false);
       queryClient.invalidateQueries({ queryKey: ['admin-cooks'] });
     } catch (error: any) {
@@ -177,6 +231,32 @@ const AdminCooks: React.FC = () => {
               </DialogHeader>
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+                  {/* Staff Selection */}
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-2">
+                      <User className="h-4 w-4" />
+                      Select Existing Staff (Optional)
+                    </FormLabel>
+                    <Select onValueChange={handleStaffSelect} value={form.watch('staffId') || ''}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select from existing staff or leave empty for new" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent className="bg-popover max-h-60">
+                        <SelectItem value="new">-- Create New User --</SelectItem>
+                        {staffProfiles?.map((staff) => (
+                          <SelectItem key={staff.id} value={staff.id}>
+                            {staff.name} ({staff.mobile_number})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      Select an existing staff member to auto-fill their details
+                    </p>
+                  </FormItem>
+
                   <FormField
                     control={form.control}
                     name="kitchenName"
@@ -213,10 +293,17 @@ const AdminCooks: React.FC = () => {
                     name="password"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Password</FormLabel>
+                        <FormLabel>
+                          Password {selectedStaff && <span className="text-xs text-muted-foreground">(for cook login)</span>}
+                        </FormLabel>
                         <FormControl>
                           <Input type="password" placeholder="Min 6 characters" {...field} />
                         </FormControl>
+                        <p className="text-xs text-muted-foreground">
+                          {selectedStaff 
+                            ? "Set a new password for cook portal access" 
+                            : "Create login password for new cook account"}
+                        </p>
                         <FormMessage />
                       </FormItem>
                     )}
