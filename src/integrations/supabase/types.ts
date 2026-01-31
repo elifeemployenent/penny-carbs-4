@@ -183,6 +183,7 @@ export type Database = {
           kitchen_name: string
           mobile_number: string
           panchayat_id: string | null
+          password_hash: string | null
           rating: number | null
           total_orders: number | null
           updated_at: string
@@ -198,6 +199,7 @@ export type Database = {
           kitchen_name: string
           mobile_number: string
           panchayat_id?: string | null
+          password_hash?: string | null
           rating?: number | null
           total_orders?: number | null
           updated_at?: string
@@ -213,6 +215,7 @@ export type Database = {
           kitchen_name?: string
           mobile_number?: string
           panchayat_id?: string | null
+          password_hash?: string | null
           rating?: number | null
           total_orders?: number | null
           updated_at?: string

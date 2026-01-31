@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCookProfile, useCookOrders, useUpdateCookStatus, useUpdateCookAvailability } from '@/hooks/useCook';
-import { useAuth } from '@/contexts/AuthContext';
+import { getCookSession, clearCookSession } from '@/pages/cook/CookLogin';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -32,14 +32,21 @@ const statusConfig: Record<CookStatus, { label: string; color: string; icon: Rea
 
 const CookDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { signOut } = useAuth();
+  const session = getCookSession();
   const { data: profile, isLoading: profileLoading } = useCookProfile();
   const { data: orders, isLoading: ordersLoading } = useCookOrders();
   const updateStatus = useUpdateCookStatus();
   const updateAvailability = useUpdateCookAvailability();
 
-  const handleLogout = async () => {
-    await signOut();
+  // Redirect if not logged in
+  useEffect(() => {
+    if (!session) {
+      navigate('/cook/login');
+    }
+  }, [session, navigate]);
+
+  const handleLogout = () => {
+    clearCookSession();
     navigate('/cook/login');
   };
 

@@ -185,11 +185,7 @@ const AdminCooks: React.FC = () => {
   const handleSubmit = async (data: CookFormData) => {
     setIsSubmitting(true);
     try {
-      // Always create a new auth user for cook login with the provided password
-      // Use the @pennycarbs.local email format for cook-specific auth
-      const email = `${data.mobileNumber}@pennycarbs.local`;
-      
-      // First check if the user already exists
+      // Check if cook with this mobile already exists
       const { data: existingCook } = await supabase
         .from('cooks')
         .select('id')
@@ -200,59 +196,23 @@ const AdminCooks: React.FC = () => {
         throw new Error('A cook with this mobile number already exists');
       }
 
-      // Create new auth user for cook login
-      // Note: signUp doesn't log out the current admin session
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password: data.password,
-        options: {
-          // Don't send email confirmation - this is internal auth
-          data: {
-            role: 'cook',
-            kitchen_name: data.kitchenName,
-          }
-        }
-      });
-
-      if (authError) {
-        // If user already exists, provide helpful error
-        if (authError.message.includes('already registered')) {
-          throw new Error('This mobile number is already registered. Try a different number or reset password.');
-        }
-        throw authError;
-      }
-
-      const userId = authData.user?.id;
-
-      if (!userId) {
-        throw new Error('Failed to create user account');
-      }
-
-      // Create cook record
+      // Create cook record with password stored directly
       const { error: cookError } = await supabase
         .from('cooks')
         .insert({
-          user_id: userId,
           kitchen_name: data.kitchenName,
           mobile_number: data.mobileNumber,
           panchayat_id: data.panchayatId,
           allowed_order_types: data.allowedOrderTypes,
+          password_hash: data.password, // Store password directly
           created_by: user?.id,
         });
 
       if (cookError) throw cookError;
 
-      // Assign cook role
-      await supabase
-        .from('user_roles')
-        .insert({
-          user_id: userId,
-          role: 'cook',
-        });
-
       toast({
         title: "Cook Registered",
-        description: `${data.kitchenName} has been registered. Login: Kitchen Name + Password`,
+        description: `${data.kitchenName} has been registered. Login: Mobile Number + Password`,
       });
 
       form.reset();
@@ -410,7 +370,7 @@ const AdminCooks: React.FC = () => {
                           <Input type="password" placeholder="Min 6 characters" {...field} />
                         </FormControl>
                         <p className="text-xs text-muted-foreground">
-                          Cook will login using Kitchen Name + this password
+                          Cook will login using Mobile Number + this password
                         </p>
                         <FormMessage />
                       </FormItem>

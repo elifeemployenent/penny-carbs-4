@@ -4,7 +4,6 @@ import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,8 +12,35 @@ import { Loader2, ChefHat, Store, Lock } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import logo from '@/assets/logo.png';
 
+// Cook session storage key
+const COOK_SESSION_KEY = 'penny_carbs_cook_session';
+
+export interface CookSession {
+  cookId: string;
+  kitchenName: string;
+  mobileNumber: string;
+  panchayatId: string | null;
+}
+
+// Helper to get/set cook session
+export const getCookSession = (): CookSession | null => {
+  const stored = localStorage.getItem(COOK_SESSION_KEY);
+  return stored ? JSON.parse(stored) : null;
+};
+
+export const setCookSession = (session: CookSession) => {
+  localStorage.setItem(COOK_SESSION_KEY, JSON.stringify(session));
+};
+
+export const clearCookSession = () => {
+  localStorage.removeItem(COOK_SESSION_KEY);
+};
+
 const loginSchema = z.object({
-  kitchenName: z.string().min(2, 'Kitchen name is required'),
+  mobileNumber: z.string()
+    .min(10, 'Mobile number must be 10 digits')
+    .max(10, 'Mobile number must be 10 digits')
+    .regex(/^\d+$/, 'Mobile number must contain only digits'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
 });
 
@@ -22,76 +48,79 @@ type LoginFormData = z.infer<typeof loginSchema>;
 
 const CookLogin: React.FC = () => {
   const navigate = useNavigate();
-  const { user, isLoading: authLoading } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      kitchenName: '',
+      mobileNumber: '',
       password: '',
     },
   });
 
   // Check if already logged in as cook
   useEffect(() => {
-    const checkCookStatus = async () => {
-      if (user && !authLoading) {
-        const { data: cook } = await supabase
-          .from('cooks')
-          .select('id')
-          .eq('user_id', user.id)
-          .maybeSingle();
-
-        if (cook) {
-          navigate('/cook/dashboard');
-        }
-      }
-    };
-
-    checkCookStatus();
-  }, [user, authLoading, navigate]);
+    const session = getCookSession();
+    if (session) {
+      navigate('/cook/dashboard');
+    } else {
+      setIsLoading(false);
+    }
+  }, [navigate]);
 
   const handleLogin = async (data: LoginFormData) => {
     setIsSubmitting(true);
     try {
-      // First, find the cook by kitchen name
+      // Find cook by mobile number and verify password
       const { data: cook, error: cookError } = await supabase
         .from('cooks')
-        .select('mobile_number')
-        .eq('kitchen_name', data.kitchenName)
-        .eq('is_active', true)
+        .select('id, kitchen_name, mobile_number, panchayat_id, password_hash, is_active')
+        .eq('mobile_number', data.mobileNumber)
         .maybeSingle();
 
       if (cookError || !cook) {
         toast({
           title: "Login failed",
-          description: "Kitchen not found or inactive",
+          description: "Mobile number not found",
           variant: "destructive",
         });
         return;
       }
 
-      // Login using the mobile number as email (Supabase auth pattern)
-      const email = `${cook.mobile_number}@pennycarbs.local`;
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password: data.password,
-      });
+      if (!cook.is_active) {
+        toast({
+          title: "Login failed",
+          description: "Your account is inactive. Contact admin.",
+          variant: "destructive",
+        });
+        return;
+      }
 
-      if (error) {
+      // Simple password verification (plain text for now)
+      if (cook.password_hash !== data.password) {
         toast({
           title: "Login failed",
           description: "Invalid password",
           variant: "destructive",
         });
-      } else {
-        toast({
-          title: "Welcome!",
-          description: "You have been logged in successfully",
-        });
-        navigate('/cook/dashboard');
+        return;
       }
+
+      // Create session
+      const session: CookSession = {
+        cookId: cook.id,
+        kitchenName: cook.kitchen_name,
+        mobileNumber: cook.mobile_number,
+        panchayatId: cook.panchayat_id,
+      };
+      setCookSession(session);
+
+      toast({
+        title: "Welcome!",
+        description: `Logged in as ${cook.kitchen_name}`,
+      });
+      navigate('/cook/dashboard');
     } catch (error) {
       toast({
         title: "Error",
@@ -103,7 +132,7 @@ const CookLogin: React.FC = () => {
     }
   };
 
-  if (authLoading) {
+  if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -125,23 +154,24 @@ const CookLogin: React.FC = () => {
             <ChefHat className="h-8 w-8 text-primary" />
           </div>
           <CardTitle className="text-xl">Kitchen Login</CardTitle>
-          <CardDescription>Sign in with your kitchen name and password</CardDescription>
+          <CardDescription>Sign in with your mobile number and password</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(handleLogin)} className="space-y-4">
               <FormField
                 control={form.control}
-                name="kitchenName"
+                name="mobileNumber"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Kitchen Name</FormLabel>
+                    <FormLabel>Mobile Number</FormLabel>
                     <FormControl>
                       <div className="relative">
                         <Store className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                         <Input
-                          placeholder="Enter your kitchen name"
+                          placeholder="Enter your 10-digit mobile number"
                           className="pl-10"
+                          maxLength={10}
                           {...field}
                         />
                       </div>
