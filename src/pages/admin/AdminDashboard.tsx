@@ -13,7 +13,9 @@ import {
   Image,
   BarChart3,
   LogOut,
-  ArrowLeft
+  ArrowLeft,
+  Truck,
+  ClipboardList
 } from 'lucide-react';
 
 const AdminDashboard: React.FC = () => {
@@ -73,6 +75,9 @@ const AdminDashboard: React.FC = () => {
   ];
 
   const commonUtilities = [
+    { icon: ChefHat, label: 'Cook Management', path: '/admin/cooks', description: 'Add & Manage Cooks' },
+    { icon: Truck, label: 'Delivery Staff', path: '/admin/delivery-staff', description: 'Manage Delivery' },
+    { icon: ClipboardList, label: 'Work Assignment', path: '/admin/work-assignment', description: 'Assign Orders' },
     { icon: Users, label: 'User Management', path: '/admin/users', description: 'Customers & Staff' },
     { icon: MapPin, label: 'Locations', path: '/admin/locations', description: 'Panchayats & Wards' },
     { icon: Image, label: 'Banners', path: '/admin/banners', description: 'Promotions' },

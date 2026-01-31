@@ -47,6 +47,7 @@ import AdminDeliveryStaff from "./pages/admin/AdminDeliveryStaff";
 import AdminReports from "./pages/admin/AdminReports";
 import AdminBanners from "./pages/admin/AdminBanners";
 import AdminAdmins from "./pages/admin/AdminAdmins";
+import AdminWorkAssignment from "./pages/admin/AdminWorkAssignment";
 
 // Admin Modules
 import IndoorEventsModule from "./pages/admin/indoor-events/IndoorEventsModule";
@@ -115,6 +116,7 @@ const App = () => (
                 <Route path="/admin/reports" element={<AdminReports />} />
                 <Route path="/admin/banners" element={<AdminBanners />} />
                 <Route path="/admin/admins" element={<AdminAdmins />} />
+                <Route path="/admin/work-assignment" element={<AdminWorkAssignment />} />
                 
                 {/* Catch-all */}
                 <Route path="*" element={<NotFound />} />
