@@ -166,18 +166,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           return { error: new Error('Failed to create profile. Please try again.') };
         }
 
-        // Assign customer role
-        const { error: roleError } = await supabase
-          .from('user_roles')
-          .insert({
-            user_id: authData.user.id,
-            role: 'customer',
-          });
-
-        if (roleError) {
-          console.error('Role assignment error:', roleError);
-          return { error: new Error('Failed to assign role. Please contact support.') };
-        }
+        // Role is auto-assigned by database trigger
       }
 
       return { error: null };
@@ -276,18 +265,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           return { error: new Error('Failed to create profile. Please try again.') };
         }
 
-        // Assign customer role
-        const { error: roleError } = await supabase
-          .from('user_roles')
-          .insert({
-            user_id: authData.user.id,
-            role: 'customer',
-          });
-
-        if (roleError) {
-          console.error('Role assignment error:', roleError);
-          return { error: new Error('Failed to assign role. Please contact support.') };
-        }
+        // Role is auto-assigned by database trigger
       }
 
       return { error: null };
