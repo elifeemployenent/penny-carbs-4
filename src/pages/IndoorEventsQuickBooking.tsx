@@ -15,8 +15,15 @@ import { toast } from '@/hooks/use-toast';
 import { ArrowLeft, CalendarDays, Users, MapPin, Phone, Zap, Loader2, CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import EventTypeSelector from '@/components/events/EventTypeSelector';
+import QuickBookingFoodSelection from '@/components/indoor-events/QuickBookingFoodSelection';
 import BottomNav from '@/components/customer/BottomNav';
 import type { EventType } from '@/types/events';
+import type { FoodItem } from '@/hooks/useIndoorEventItems';
+
+interface SelectedItem {
+  item: FoodItem;
+  quantity: number;
+}
 
 const IndoorEventsQuickBooking: React.FC = () => {
   const navigate = useNavigate();
@@ -30,10 +37,18 @@ const IndoorEventsQuickBooking: React.FC = () => {
   const [contactNumber, setContactNumber] = useState(profile?.mobile_number || '');
   const [eventDetails, setEventDetails] = useState('');
   const [deliveryAddress, setDeliveryAddress] = useState('');
+  const [selectedItems, setSelectedItems] = useState<Map<string, SelectedItem>>(new Map());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
   const minDate = addDays(startOfDay(new Date()), 1);
+
+  // Calculate totals from selected items
+  const totalItemsCount = Array.from(selectedItems.values()).reduce((sum, { quantity }) => sum + quantity, 0);
+  const estimatedTotal = Array.from(selectedItems.values()).reduce(
+    (sum, { item, quantity }) => sum + (item.price * quantity), 
+    0
+  );
 
   const handleSubmit = async () => {
     if (!user) {
@@ -106,23 +121,53 @@ const IndoorEventsQuickBooking: React.FC = () => {
       // Generate order number
       const orderNumber = `IE-${Date.now().toString(36).toUpperCase()}`;
 
-      const { error } = await supabase.from('orders').insert({
-        order_number: orderNumber,
-        customer_id: user.id,
-        service_type: 'indoor_events',
-        event_type_id: selectedEventType.id,
-        event_date: eventDate.toISOString(),
-        guest_count: guestCount,
-        event_details: `Quick Booking | Time: ${eventTime || 'Not specified'} | Contact: ${contactNumber} | ${eventDetails}`,
-        delivery_address: deliveryAddress,
-        panchayat_id: selectedPanchayat.id,
-        ward_number: selectedWardNumber,
-        status: 'pending',
-        order_type: 'food_only',
-        total_amount: 0, // Will be set by admin after quotation
-      });
+      // Build selected items summary for event details
+      const itemsSummary = totalItemsCount > 0 
+        ? Array.from(selectedItems.values())
+            .map(({ item, quantity }) => `${item.name} x${quantity}`)
+            .join(', ')
+        : 'No specific dishes selected';
 
-      if (error) throw error;
+      const { data: orderData, error: orderError } = await supabase
+        .from('orders')
+        .insert({
+          order_number: orderNumber,
+          customer_id: user.id,
+          service_type: 'indoor_events',
+          event_type_id: selectedEventType.id,
+          event_date: eventDate.toISOString(),
+          guest_count: guestCount,
+          event_details: `Quick Booking | Time: ${eventTime || 'Not specified'} | Contact: ${contactNumber} | Items: ${itemsSummary} | ${eventDetails}`,
+          delivery_address: deliveryAddress,
+          panchayat_id: selectedPanchayat.id,
+          ward_number: selectedWardNumber,
+          status: 'pending',
+          order_type: 'food_only',
+          total_amount: estimatedTotal || 0,
+        })
+        .select('id')
+        .single();
+
+      if (orderError) throw orderError;
+
+      // Insert order items if any selected
+      if (totalItemsCount > 0 && orderData) {
+        const orderItems = Array.from(selectedItems.values()).map(({ item, quantity }) => ({
+          order_id: orderData.id,
+          food_item_id: item.id,
+          quantity,
+          unit_price: item.price,
+          total_price: item.price * quantity,
+        }));
+
+        const { error: itemsError } = await supabase
+          .from('order_items')
+          .insert(orderItems);
+
+        if (itemsError) {
+          console.error('Error inserting order items:', itemsError);
+        }
+      }
 
       setIsSubmitted(true);
       toast({
@@ -209,6 +254,12 @@ const IndoorEventsQuickBooking: React.FC = () => {
         <EventTypeSelector
           selectedEventType={selectedEventType}
           onSelect={setSelectedEventType}
+        />
+
+        {/* Food Selection */}
+        <QuickBookingFoodSelection
+          selectedItems={selectedItems}
+          onItemsChange={setSelectedItems}
         />
 
         {/* Event Details */}
