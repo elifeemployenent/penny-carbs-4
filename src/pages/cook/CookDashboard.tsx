@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useCookProfile, useCookOrders, useUpdateCookStatus, useUpdateCookAvailability, useCookEarnings, useCookOrderHistory } from '@/hooks/useCook';
+import { useCookProfile, useCookOrders, useUpdateCookStatus, useUpdateCookAvailability, useCookEarnings, useCookOrderHistory, useCookSettlements } from '@/hooks/useCook';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,6 +8,14 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { toast } from '@/hooks/use-toast';
 import { 
   ChefHat, 
@@ -44,9 +52,29 @@ const CookDashboard: React.FC = () => {
   const { data: orders, isLoading: ordersLoading } = useCookOrders();
   const { data: earnings, isLoading: earningsLoading } = useCookEarnings();
   const { data: orderHistory, isLoading: historyLoading } = useCookOrderHistory();
+  const { data: settlements, isLoading: settlementsLoading } = useCookSettlements();
   const updateStatus = useUpdateCookStatus();
   const updateAvailability = useUpdateCookAvailability();
   const [activeTab, setActiveTab] = useState('active');
+
+  // Calculate dish summary from order history
+  const dishSummary = useMemo(() => {
+    if (!orderHistory) return [];
+    const map = new Map<string, { name: string; totalQty: number; totalAmount: number }>();
+    orderHistory.forEach(assignment => {
+      assignment.order_items?.forEach(item => {
+        const name = item.food_item?.name || 'Unknown';
+        const existing = map.get(name);
+        if (existing) {
+          existing.totalQty += item.quantity;
+          existing.totalAmount += item.total_price;
+        } else {
+          map.set(name, { name, totalQty: item.quantity, totalAmount: item.total_price });
+        }
+      });
+    });
+    return Array.from(map.values()).sort((a, b) => b.totalQty - a.totalQty);
+  }, [orderHistory]);
 
   // Redirect if not logged in
   useEffect(() => {
@@ -217,14 +245,18 @@ const CookDashboard: React.FC = () => {
 
         {/* Orders Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="w-full grid grid-cols-2">
+          <TabsList className="w-full grid grid-cols-3">
             <TabsTrigger value="active" className="gap-1">
               <Clock className="h-4 w-4" />
-              Active ({orders?.length || 0})
+              Active
             </TabsTrigger>
             <TabsTrigger value="history" className="gap-1">
               <History className="h-4 w-4" />
-              History ({orderHistory?.length || 0})
+              History
+            </TabsTrigger>
+            <TabsTrigger value="wallet" className="gap-1">
+              <Wallet className="h-4 w-4" />
+              Wallet
             </TabsTrigger>
           </TabsList>
 
@@ -360,7 +392,40 @@ const CookDashboard: React.FC = () => {
           </TabsContent>
 
           {/* Order History Tab */}
-          <TabsContent value="history" className="space-y-3 mt-4">
+          <TabsContent value="history" className="space-y-4 mt-4">
+            {/* Dish Summary */}
+            {dishSummary.length > 0 && (
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <UtensilsCrossed className="h-4 w-4" />
+                    Dish Summary
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Dish Name</TableHead>
+                        <TableHead className="text-right">Total Qty</TableHead>
+                        <TableHead className="text-right">Total Amount</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {dishSummary.slice(0, 10).map((dish, idx) => (
+                        <TableRow key={idx}>
+                          <TableCell className="font-medium">{dish.name}</TableCell>
+                          <TableCell className="text-right">{dish.totalQty}</TableCell>
+                          <TableCell className="text-right">₹{dish.totalAmount.toLocaleString()}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Order History List */}
             {historyLoading ? (
               [...Array(3)].map((_, i) => <Skeleton key={i} className="h-32" />)
             ) : orderHistory && orderHistory.length > 0 ? (
@@ -407,13 +472,20 @@ const CookDashboard: React.FC = () => {
                     {/* Dishes prepared */}
                     {assignment.order_items && assignment.order_items.length > 0 && (
                       <div className="mt-3 pt-3 border-t">
-                        <p className="text-xs font-medium text-muted-foreground mb-1">Dishes Prepared:</p>
-                        <div className="flex flex-wrap gap-1">
+                        <p className="text-xs font-medium text-muted-foreground mb-2">Dishes Prepared:</p>
+                        <div className="space-y-1">
                           {assignment.order_items.map((item) => (
-                            <Badge key={item.id} variant="outline" className="text-xs">
-                              {item.food_item?.name} × {item.quantity}
-                            </Badge>
+                            <div key={item.id} className="flex items-center justify-between text-sm">
+                              <span>{item.food_item?.name || 'Unknown'}</span>
+                              <span className="text-muted-foreground">Qty: {item.quantity} × ₹{item.unit_price}</span>
+                            </div>
                           ))}
+                        </div>
+                        <div className="mt-2 pt-2 border-t flex justify-between text-sm font-medium">
+                          <span>Your Earnings</span>
+                          <span className="text-primary">
+                            ₹{assignment.order_items.reduce((sum, item) => sum + item.total_price, 0).toLocaleString()}
+                          </span>
                         </div>
                       </div>
                     )}
@@ -424,6 +496,51 @@ const CookDashboard: React.FC = () => {
               <Card className="p-6 text-center">
                 <History className="h-12 w-12 mx-auto mb-2 text-muted-foreground" />
                 <p className="text-muted-foreground">No order history yet</p>
+              </Card>
+            )}
+          </TabsContent>
+
+          {/* Wallet Tab */}
+          <TabsContent value="wallet" className="mt-4">
+            {settlementsLoading ? (
+              <Skeleton className="h-48" />
+            ) : settlements && settlements.length > 0 ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <IndianRupee className="h-4 w-4" />
+                    Settlement History
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Amount</TableHead>
+                        <TableHead>Status</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {settlements.map(settlement => (
+                        <TableRow key={settlement.id}>
+                          <TableCell>{format(new Date(settlement.created_at), 'dd MMM yyyy')}</TableCell>
+                          <TableCell className="font-medium">₹{Number(settlement.amount).toLocaleString()}</TableCell>
+                          <TableCell>
+                            <Badge variant={settlement.status === 'approved' || settlement.status === 'paid' ? 'default' : 'secondary'}>
+                              {settlement.status}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="p-6 text-center">
+                <Wallet className="h-12 w-12 mx-auto mb-2 text-muted-foreground" />
+                <p className="text-muted-foreground">No settlements yet</p>
               </Card>
             )}
           </TabsContent>

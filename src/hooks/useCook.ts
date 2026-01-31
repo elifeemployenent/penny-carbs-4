@@ -141,6 +141,15 @@ export function useCookOrders() {
   });
 }
 
+export interface CookSettlement {
+  id: string;
+  amount: number;
+  status: string;
+  created_at: string;
+  approved_at: string | null;
+  order_id: string | null;
+}
+
 export function useCookEarnings() {
   const { data: profile } = useCookProfile();
 
@@ -182,6 +191,27 @@ export function useCookEarnings() {
       };
     },
     enabled: !!profile?.id,
+  });
+}
+
+export function useCookSettlements() {
+  const { data: profile } = useCookProfile();
+
+  return useQuery({
+    queryKey: ['cook-settlements', profile?.user_id],
+    queryFn: async (): Promise<CookSettlement[]> => {
+      if (!profile?.user_id) return [];
+
+      const { data, error } = await supabase
+        .from('settlements')
+        .select('id, amount, status, created_at, approved_at, order_id')
+        .eq('user_id', profile.user_id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data as CookSettlement[];
+    },
+    enabled: !!profile?.user_id,
   });
 }
 
