@@ -650,7 +650,11 @@ const AdminCooks: React.FC = () => {
               [...Array(3)].map((_, i) => <Skeleton key={i} className="h-32" />)
             ) : cooks && cooks.length > 0 ? (
               cooks.map((cook) => (
-                <Card key={cook.id}>
+                <Card 
+                  key={cook.id} 
+                  className="cursor-pointer hover:shadow-md transition-shadow"
+                  onClick={() => navigate(`/admin/cooks/${cook.id}`)}
+                >
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
@@ -684,11 +688,17 @@ const AdminCooks: React.FC = () => {
                       ))}
                     </div>
 
-                    <div className="mt-3 flex justify-end">
+                    <div className="mt-3 flex justify-between items-center">
+                      <p className="text-sm text-muted-foreground">
+                        ⭐ {cook.rating?.toFixed(1) || '0.0'} • {cook.total_orders || 0} orders
+                      </p>
                       <Button
                         size="sm"
                         variant={cook.is_active ? "destructive" : "default"}
-                        onClick={() => toggleCookStatus(cook.id, cook.is_active)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleCookStatus(cook.id, cook.is_active);
+                        }}
                       >
                         {cook.is_active ? "Deactivate" : "Activate"}
                       </Button>

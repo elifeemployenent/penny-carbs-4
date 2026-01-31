@@ -1,7 +1,30 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import type { Cook, CookOrder, CookStatus, CookEarnings } from '@/types/cook';
+import type { Cook, CookOrder, CookStatus, CookEarnings, CookOrderItem } from '@/types/cook';
+
+export interface CookOrderHistory {
+  id: string;
+  order_id: string;
+  cook_status: string;
+  assigned_at: string;
+  responded_at: string | null;
+  order: {
+    order_number: string;
+    status: string;
+    total_amount: number;
+    guest_count: number | null;
+    event_date: string | null;
+    service_type: string;
+    created_at: string;
+    customer_id: string;
+  };
+  customer?: {
+    name: string;
+    mobile_number: string;
+  };
+  order_items?: CookOrderItem[];
+}
 
 export function useCookProfile() {
   const { user } = useAuth();
@@ -162,6 +185,67 @@ export function useCookEarnings() {
   });
 }
 
+export function useCookOrderHistory() {
+  const { data: profile } = useCookProfile();
+
+  return useQuery({
+    queryKey: ['cook-order-history', profile?.id],
+    queryFn: async (): Promise<CookOrderHistory[]> => {
+      if (!profile?.id) return [];
+
+      // Fetch all completed assignments
+      const { data: assignments, error } = await supabase
+        .from('order_assigned_cooks')
+        .select(`
+          id, order_id, cook_status, assigned_at, responded_at,
+          order:orders(order_number, status, total_amount, guest_count, event_date, service_type, created_at, customer_id)
+        `)
+        .eq('cook_id', profile.id)
+        .eq('cook_status', 'ready')
+        .order('assigned_at', { ascending: false })
+        .limit(50);
+
+      if (error) throw error;
+      if (!assignments || assignments.length === 0) return [];
+
+      // Fetch customer profiles
+      const customerIds = [...new Set(assignments.map((a: any) => a.order?.customer_id).filter(Boolean))];
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('user_id, name, mobile_number')
+        .in('user_id', customerIds);
+
+      const profileMap = new Map(profiles?.map((p: any) => [p.user_id, p]) || []);
+
+      // Fetch order items assigned to this cook
+      const orderIds = assignments.map(a => a.order_id);
+      const { data: orderItems } = await supabase
+        .from('order_items')
+        .select(`
+          id, order_id, food_item_id, quantity, unit_price, total_price,
+          food_item:food_items(id, name)
+        `)
+        .in('order_id', orderIds)
+        .eq('assigned_cook_id', profile.id);
+
+      const orderItemsMap = new Map<string, typeof orderItems>();
+      orderItems?.forEach(item => {
+        if (!orderItemsMap.has(item.order_id)) {
+          orderItemsMap.set(item.order_id, []);
+        }
+        orderItemsMap.get(item.order_id)!.push(item);
+      });
+
+      return assignments.map((a: any) => ({
+        ...a,
+        customer: a.order?.customer_id ? profileMap.get(a.order.customer_id) : null,
+        order_items: orderItemsMap.get(a.order_id) || [],
+      }));
+    },
+    enabled: !!profile?.id,
+  });
+}
+
 export function useUpdateCookStatus() {
   const queryClient = useQueryClient();
   const { data: profile } = useCookProfile();
@@ -185,6 +269,7 @@ export function useUpdateCookStatus() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cook-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['cook-order-history'] });
     },
   });
 }

@@ -1,12 +1,13 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useCookProfile, useCookOrders, useUpdateCookStatus, useUpdateCookAvailability, useCookEarnings } from '@/hooks/useCook';
+import { useCookProfile, useCookOrders, useUpdateCookStatus, useUpdateCookAvailability, useCookEarnings, useCookOrderHistory } from '@/hooks/useCook';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
 import { 
   ChefHat, 
@@ -21,8 +22,11 @@ import {
   Users,
   Wallet,
   IndianRupee,
-  TrendingUp
+  TrendingUp,
+  History,
+  Calendar
 } from 'lucide-react';
+import { format } from 'date-fns';
 import type { CookStatus } from '@/types/cook';
 
 const statusConfig: Record<CookStatus, { label: string; color: string; icon: React.ReactNode }> = {
@@ -39,8 +43,10 @@ const CookDashboard: React.FC = () => {
   const { data: profile, isLoading: profileLoading } = useCookProfile();
   const { data: orders, isLoading: ordersLoading } = useCookOrders();
   const { data: earnings, isLoading: earningsLoading } = useCookEarnings();
+  const { data: orderHistory, isLoading: historyLoading } = useCookOrderHistory();
   const updateStatus = useUpdateCookStatus();
   const updateAvailability = useUpdateCookAvailability();
+  const [activeTab, setActiveTab] = useState('active');
 
   // Redirect if not logged in
   useEffect(() => {
@@ -209,138 +215,219 @@ const CookDashboard: React.FC = () => {
           </Card>
         </div>
 
-        {/* Orders Section */}
-        <div className="space-y-3">
-          <h2 className="text-lg font-semibold">Active Orders</h2>
+        {/* Orders Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="w-full grid grid-cols-2">
+            <TabsTrigger value="active" className="gap-1">
+              <Clock className="h-4 w-4" />
+              Active ({orders?.length || 0})
+            </TabsTrigger>
+            <TabsTrigger value="history" className="gap-1">
+              <History className="h-4 w-4" />
+              History ({orderHistory?.length || 0})
+            </TabsTrigger>
+          </TabsList>
 
-          {ordersLoading ? (
-            [...Array(3)].map((_, i) => <Skeleton key={i} className="h-40" />)
-          ) : orders && orders.length > 0 ? (
-            orders.map((order) => {
-              const status = statusConfig[order.cook_status as CookStatus] || statusConfig.pending;
-              const nextStatus = getNextStatus(order.cook_status as CookStatus);
+          {/* Active Orders Tab */}
+          <TabsContent value="active" className="space-y-3 mt-4">
+            {ordersLoading ? (
+              [...Array(3)].map((_, i) => <Skeleton key={i} className="h-40" />)
+            ) : orders && orders.length > 0 ? (
+              orders.map((order) => {
+                const status = statusConfig[order.cook_status as CookStatus] || statusConfig.pending;
+                const nextStatus = getNextStatus(order.cook_status as CookStatus);
 
-              return (
-                <Card key={order.id} className="overflow-hidden">
-                  <CardHeader className="pb-2">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-base">#{order.order_number}</CardTitle>
-                      <Badge className={status.color}>
-                        {status.icon}
-                        <span className="ml-1">{status.label}</span>
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {/* Order Info */}
-                    <div className="grid grid-cols-2 gap-2 text-sm">
-                      <div className="flex items-center gap-1 text-muted-foreground">
-                        <UtensilsCrossed className="h-3 w-3" />
-                        <span className="capitalize">{order.service_type.replace('_', ' ')}</span>
+                return (
+                  <Card key={order.id} className="overflow-hidden">
+                    <CardHeader className="pb-2">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base">#{order.order_number}</CardTitle>
+                        <Badge className={status.color}>
+                          {status.icon}
+                          <span className="ml-1">{status.label}</span>
+                        </Badge>
                       </div>
-                      <div className="flex items-center gap-1 text-muted-foreground">
-                        <Clock className="h-3 w-3" />
-                        <span>{new Date(order.created_at).toLocaleTimeString()}</span>
-                      </div>
-                      {order.guest_count && (
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      {/* Order Info */}
+                      <div className="grid grid-cols-2 gap-2 text-sm">
                         <div className="flex items-center gap-1 text-muted-foreground">
-                          <Users className="h-3 w-3" />
-                          <span>{order.guest_count} guests</span>
+                          <UtensilsCrossed className="h-3 w-3" />
+                          <span className="capitalize">{order.service_type.replace('_', ' ')}</span>
+                        </div>
+                        <div className="flex items-center gap-1 text-muted-foreground">
+                          <Clock className="h-3 w-3" />
+                          <span>{new Date(order.created_at).toLocaleTimeString()}</span>
+                        </div>
+                        {order.guest_count && (
+                          <div className="flex items-center gap-1 text-muted-foreground">
+                            <Users className="h-3 w-3" />
+                            <span>{order.guest_count} guests</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Order Items - Dishes assigned to this cook */}
+                      {order.order_items && order.order_items.length > 0 && (
+                        <div className="border rounded-lg p-3 bg-muted/30">
+                          <p className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1">
+                            <ChefHat className="h-3 w-3" />
+                            Your Dishes to Prepare
+                          </p>
+                          <div className="space-y-1.5">
+                            {order.order_items.map((item) => (
+                              <div key={item.id} className="flex items-center justify-between text-sm">
+                                <span className="font-medium">{item.food_item?.name || 'Unknown Dish'}</span>
+                                <span className="text-muted-foreground">
+                                  Qty: {item.quantity} × ₹{item.unit_price}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                          <div className="mt-2 pt-2 border-t flex justify-between text-sm font-medium">
+                            <span>Your Items Total</span>
+                            <span className="text-primary">
+                              ₹{order.order_items.reduce((sum, item) => sum + item.total_price, 0).toLocaleString()}
+                            </span>
+                          </div>
                         </div>
                       )}
-                    </div>
 
-                    {/* Order Items - Dishes assigned to this cook */}
-                    {order.order_items && order.order_items.length > 0 && (
-                      <div className="border rounded-lg p-3 bg-muted/30">
-                        <p className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1">
-                          <ChefHat className="h-3 w-3" />
-                          Your Dishes to Prepare
-                        </p>
-                        <div className="space-y-1.5">
-                          {order.order_items.map((item) => (
-                            <div key={item.id} className="flex items-center justify-between text-sm">
-                              <span className="font-medium">{item.food_item?.name || 'Unknown Dish'}</span>
-                              <span className="text-muted-foreground">
-                                Qty: {item.quantity} × ₹{item.unit_price}
-                              </span>
-                            </div>
-                          ))}
+                      {/* Customer Info */}
+                      {order.customer && (
+                        <div className="p-2 rounded bg-muted text-sm">
+                          <p className="font-medium">{order.customer.name}</p>
+                          <a href={`tel:${order.customer.mobile_number}`} className="flex items-center gap-1 text-primary">
+                            <Phone className="h-3 w-3" />
+                            {order.customer.mobile_number}
+                          </a>
                         </div>
-                        <div className="mt-2 pt-2 border-t flex justify-between text-sm font-medium">
-                          <span>Your Items Total</span>
-                          <span className="text-primary">
-                            ₹{order.order_items.reduce((sum, item) => sum + item.total_price, 0).toLocaleString()}
+                      )}
+
+                      {/* Delivery Address */}
+                      {order.delivery_address && (
+                        <div className="flex items-start gap-1 text-sm text-muted-foreground">
+                          <MapPin className="h-3 w-3 mt-0.5 shrink-0" />
+                          <span>{order.delivery_address}</span>
+                        </div>
+                      )}
+
+                      {/* Amount */}
+                      <div className="flex items-center justify-between pt-2 border-t">
+                        <span className="font-semibold">Order Total: ₹{order.total_amount}</span>
+
+                        {/* Action Buttons */}
+                        <div className="flex gap-2">
+                          {order.cook_status === 'pending' && (
+                            <>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => handleStatusUpdate(order.id, 'ready')}
+                              >
+                                <XCircle className="h-4 w-4 mr-1" />
+                                Reject
+                              </Button>
+                              <Button
+                                size="sm"
+                                onClick={() => handleStatusUpdate(order.id, 'accepted')}
+                              >
+                                <CheckCircle2 className="h-4 w-4 mr-1" />
+                                Accept
+                              </Button>
+                            </>
+                          )}
+                          {nextStatus && order.cook_status !== 'pending' && (
+                            <Button
+                              size="sm"
+                              onClick={() => handleStatusUpdate(order.id, nextStatus)}
+                            >
+                              Mark as {statusConfig[nextStatus].label}
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })
+            ) : (
+              <Card className="p-6 text-center">
+                <UtensilsCrossed className="h-12 w-12 mx-auto mb-2 text-muted-foreground" />
+                <p className="text-muted-foreground">No active orders</p>
+              </Card>
+            )}
+          </TabsContent>
+
+          {/* Order History Tab */}
+          <TabsContent value="history" className="space-y-3 mt-4">
+            {historyLoading ? (
+              [...Array(3)].map((_, i) => <Skeleton key={i} className="h-32" />)
+            ) : orderHistory && orderHistory.length > 0 ? (
+              orderHistory.map((assignment) => (
+                <Card key={assignment.id}>
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-mono text-sm font-medium">{assignment.order?.order_number}</span>
+                          <Badge className="bg-green-100 text-green-800">
+                            <CheckCircle2 className="h-3 w-3 mr-1" />
+                            Completed
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          Customer: {assignment.customer?.name || 'Unknown'}
+                        </p>
+                        <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground mt-1">
+                          {assignment.order?.event_date && (
+                            <span className="flex items-center gap-1">
+                              <Calendar className="h-3 w-3" />
+                              {format(new Date(assignment.order.event_date), 'dd MMM yyyy')}
+                            </span>
+                          )}
+                          {assignment.order?.guest_count && (
+                            <span className="flex items-center gap-1">
+                              <Users className="h-3 w-3" />
+                              {assignment.order.guest_count} guests
+                            </span>
+                          )}
+                          <span className="flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            {format(new Date(assignment.assigned_at), 'dd MMM, HH:mm')}
                           </span>
                         </div>
                       </div>
-                    )}
-
-                    {/* Customer Info */}
-                    {order.customer && (
-                      <div className="p-2 rounded bg-muted text-sm">
-                        <p className="font-medium">{order.customer.name}</p>
-                        <a href={`tel:${order.customer.mobile_number}`} className="flex items-center gap-1 text-primary">
-                          <Phone className="h-3 w-3" />
-                          {order.customer.mobile_number}
-                        </a>
-                      </div>
-                    )}
-
-                    {/* Delivery Address */}
-                    {order.delivery_address && (
-                      <div className="flex items-start gap-1 text-sm text-muted-foreground">
-                        <MapPin className="h-3 w-3 mt-0.5 shrink-0" />
-                        <span>{order.delivery_address}</span>
-                      </div>
-                    )}
-
-                    {/* Amount */}
-                    <div className="flex items-center justify-between pt-2 border-t">
-                      <span className="font-semibold">Order Total: ₹{order.total_amount}</span>
-
-                      {/* Action Buttons */}
-                      <div className="flex gap-2">
-                        {order.cook_status === 'pending' && (
-                          <>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => handleStatusUpdate(order.id, 'ready')}
-                            >
-                              <XCircle className="h-4 w-4 mr-1" />
-                              Reject
-                            </Button>
-                            <Button
-                              size="sm"
-                              onClick={() => handleStatusUpdate(order.id, 'accepted')}
-                            >
-                              <CheckCircle2 className="h-4 w-4 mr-1" />
-                              Accept
-                            </Button>
-                          </>
-                        )}
-                        {nextStatus && order.cook_status !== 'pending' && (
-                          <Button
-                            size="sm"
-                            onClick={() => handleStatusUpdate(order.id, nextStatus)}
-                          >
-                            Mark as {statusConfig[nextStatus].label}
-                          </Button>
-                        )}
+                      <div className="text-right">
+                        <p className="font-bold text-primary">₹{assignment.order?.total_amount?.toLocaleString() || 0}</p>
+                        <p className="text-xs text-muted-foreground capitalize">{assignment.order?.service_type?.replace('_', ' ')}</p>
                       </div>
                     </div>
+
+                    {/* Dishes prepared */}
+                    {assignment.order_items && assignment.order_items.length > 0 && (
+                      <div className="mt-3 pt-3 border-t">
+                        <p className="text-xs font-medium text-muted-foreground mb-1">Dishes Prepared:</p>
+                        <div className="flex flex-wrap gap-1">
+                          {assignment.order_items.map((item) => (
+                            <Badge key={item.id} variant="outline" className="text-xs">
+                              {item.food_item?.name} × {item.quantity}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
-              );
-            })
-          ) : (
-            <Card className="p-6 text-center">
-              <UtensilsCrossed className="h-12 w-12 mx-auto mb-2 text-muted-foreground" />
-              <p className="text-muted-foreground">No active orders</p>
-            </Card>
-          )}
-        </div>
+              ))
+            ) : (
+              <Card className="p-6 text-center">
+                <History className="h-12 w-12 mx-auto mb-2 text-muted-foreground" />
+                <p className="text-muted-foreground">No order history yet</p>
+              </Card>
+            )}
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );

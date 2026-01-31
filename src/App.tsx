@@ -43,6 +43,7 @@ import AdminItems from "./pages/admin/AdminItems";
 import AdminCategories from "./pages/admin/AdminCategories";
 import AdminLocations from "./pages/admin/AdminLocations";
 import AdminCooks from "./pages/admin/AdminCooks";
+import AdminCookProfile from "./pages/admin/AdminCookProfile";
 import AdminDeliveryStaff from "./pages/admin/AdminDeliveryStaff";
 import AdminReports from "./pages/admin/AdminReports";
 import AdminBanners from "./pages/admin/AdminBanners";
@@ -112,6 +113,7 @@ const App = () => (
                 <Route path="/admin/categories" element={<AdminCategories />} />
                 <Route path="/admin/locations" element={<AdminLocations />} />
                 <Route path="/admin/cooks" element={<AdminCooks />} />
+                <Route path="/admin/cooks/:cookId" element={<AdminCookProfile />} />
                 <Route path="/admin/delivery-staff" element={<AdminDeliveryStaff />} />
                 <Route path="/admin/reports" element={<AdminReports />} />
                 <Route path="/admin/banners" element={<AdminBanners />} />
