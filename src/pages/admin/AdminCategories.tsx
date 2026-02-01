@@ -247,7 +247,7 @@ const AdminCategories: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pt-28">
       <AdminNavbar />
 
       {/* Page Header */}
