@@ -2,6 +2,7 @@ import React from 'react';
 import AppHeader from '@/components/customer/AppHeader';
 import BannerCarousel from '@/components/customer/BannerCarousel';
 import SpecialOffers from '@/components/customer/SpecialOffers';
+import FeaturedItems from '@/components/customer/FeaturedItems';
 import ServiceCards from '@/components/customer/ServiceCards';
 import PopularItems from '@/components/customer/PopularItems';
 import CartButton from '@/components/customer/CartButton';
@@ -22,6 +23,9 @@ const Index: React.FC = () => {
         
         {/* Special Offers - Small Cards */}
         <SpecialOffers />
+        
+        {/* Featured Items */}
+        <FeaturedItems />
         
         {/* Service Type Cards */}
         <ServiceCards />
