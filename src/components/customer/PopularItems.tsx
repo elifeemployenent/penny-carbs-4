@@ -48,8 +48,8 @@ const PopularItems: React.FC<PopularItemsProps> = ({
             *,
             images:food_item_images(*)
           `)
-          .eq('service_type', serviceType)
-          .eq('is_available', true);
+          .eq('is_available', true)
+          .or(`service_type.eq.${serviceType},service_types.cs.{${serviceType}}`);
 
         if (selectedPanchayat) {
           query = query.or(
