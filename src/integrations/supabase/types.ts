@@ -720,6 +720,7 @@ export type Database = {
           panchayat_id: string | null
           preparation_time_minutes: number | null
           price: number
+          serves_persons: number | null
           service_type: Database["public"]["Enums"]["service_type"]
           service_types: string[] | null
           updated_at: string
@@ -744,6 +745,7 @@ export type Database = {
           panchayat_id?: string | null
           preparation_time_minutes?: number | null
           price: number
+          serves_persons?: number | null
           service_type: Database["public"]["Enums"]["service_type"]
           service_types?: string[] | null
           updated_at?: string
@@ -768,6 +770,7 @@ export type Database = {
           panchayat_id?: string | null
           preparation_time_minutes?: number | null
           price?: number
+          serves_persons?: number | null
           service_type?: Database["public"]["Enums"]["service_type"]
           service_types?: string[] | null
           updated_at?: string

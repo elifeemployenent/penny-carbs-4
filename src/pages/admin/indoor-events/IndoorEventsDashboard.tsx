@@ -13,6 +13,7 @@ import {
   Wallet,
   Sparkles,
 } from 'lucide-react';
+import FoodQuantityCalculator from '@/components/admin/FoodQuantityCalculator';
 
 export type IndoorEventsStats = {
   newRequests: number;
@@ -111,6 +112,10 @@ const IndoorEventsDashboard: React.FC<Props> = ({ stats }) => {
             </Button>
             <span className="text-lg font-semibold">Indoor Events</span>
           </div>
+          <FoodQuantityCalculator 
+            serviceType="indoor_events" 
+            triggerClassName="text-white border-white/30 hover:bg-white/20 hover:text-white"
+          />
         </div>
       </header>
 

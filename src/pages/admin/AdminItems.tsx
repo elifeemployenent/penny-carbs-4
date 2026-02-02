@@ -76,6 +76,7 @@ const AdminItems: React.FC = () => {
     discount_percent: '',
     discount_amount: '',
     is_featured: false,
+    serves_persons: '',
   });
 
   const isAdmin = role === 'super_admin' || role === 'admin';
@@ -156,6 +157,7 @@ const AdminItems: React.FC = () => {
         discount_percent?: number;
         discount_amount?: number;
         is_featured?: boolean;
+        serves_persons?: number;
       };
       const serviceTypesArray = itemWithExtras.service_types?.length 
         ? itemWithExtras.service_types 
@@ -175,6 +177,7 @@ const AdminItems: React.FC = () => {
         discount_percent: itemWithExtras.discount_percent?.toString() || '',
         discount_amount: itemWithExtras.discount_amount?.toString() || '',
         is_featured: itemWithExtras.is_featured ?? false,
+        serves_persons: itemWithExtras.serves_persons?.toString() || '',
       });
     } else {
       setEditingItem(null);
@@ -194,6 +197,7 @@ const AdminItems: React.FC = () => {
         discount_percent: '',
         discount_amount: '',
         is_featured: false,
+        serves_persons: '',
       });
     }
     setIsDialogOpen(true);
@@ -236,6 +240,7 @@ const AdminItems: React.FC = () => {
         discount_percent: formData.discount_percent ? parseFloat(formData.discount_percent) : 0,
         discount_amount: formData.discount_amount ? parseFloat(formData.discount_amount) : 0,
         is_featured: formData.is_featured,
+        serves_persons: formData.serves_persons ? parseInt(formData.serves_persons) : null,
       };
 
       if (editingItem) {
@@ -554,6 +559,19 @@ const AdminItems: React.FC = () => {
                   placeholder="30"
                 />
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="serves_persons">Serves (persons per unit)</Label>
+              <p className="text-xs text-muted-foreground">How many persons can 1 unit serve? (e.g., 1 kg biryani serves 6 persons)</p>
+              <Input
+                id="serves_persons"
+                type="number"
+                min="1"
+                value={formData.serves_persons}
+                onChange={(e) => setFormData({ ...formData, serves_persons: e.target.value })}
+                placeholder="e.g., 6"
+              />
             </div>
 
             <div className="space-y-3">

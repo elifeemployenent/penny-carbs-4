@@ -18,6 +18,7 @@ import {
   UtensilsCrossed,
   Timer
 } from 'lucide-react';
+import FoodQuantityCalculator from '@/components/admin/FoodQuantityCalculator';
 
 const CloudKitchenModule: React.FC = () => {
   const navigate = useNavigate();
@@ -139,6 +140,10 @@ const CloudKitchenModule: React.FC = () => {
             <ChefHat className="h-6 w-6" />
             <h1 className="font-display text-lg font-semibold">Cloud Kitchen</h1>
           </div>
+          <FoodQuantityCalculator 
+            serviceType="cloud_kitchen" 
+            triggerClassName="text-white border-white/30 hover:bg-white/20 hover:text-white"
+          />
         </div>
       </header>
 
