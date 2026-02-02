@@ -259,11 +259,11 @@ const DishRequestForm: React.FC = () => {
                           name="dish_category_id"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Category</FormLabel>
-                              <Select value={field.value} onValueChange={field.onChange}>
+                              <FormLabel>Category (Optional)</FormLabel>
+                              <Select value={field.value || ""} onValueChange={field.onChange}>
                                 <FormControl>
                                   <SelectTrigger>
-                                    <SelectValue placeholder="Select category..." />
+                                    <SelectValue placeholder="Select a category..." />
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
