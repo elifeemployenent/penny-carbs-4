@@ -8,6 +8,7 @@ export interface FoodItem {
   price: number;
   is_vegetarian: boolean;
   category_id: string | null;
+  serves_persons?: number | null;
   category?: {
     id: string;
     name: string;

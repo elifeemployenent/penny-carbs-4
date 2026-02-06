@@ -1,17 +1,20 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Plus, Minus, Leaf } from 'lucide-react';
+import { Plus, Minus, Leaf, Wand2 } from 'lucide-react';
 import type { FoodItem } from '@/hooks/useIndoorEventItems';
+import FoodQuantitySuggestionDialog from './FoodQuantitySuggestionDialog';
 
 interface FoodItemCardProps {
   item: FoodItem;
   quantity: number;
   onQuantityChange: (quantity: number) => void;
+  guestCount?: number;
 }
 
-const FoodItemCard: React.FC<FoodItemCardProps> = ({ item, quantity, onQuantityChange }) => {
+const FoodItemCard: React.FC<FoodItemCardProps> = ({ item, quantity, onQuantityChange, guestCount }) => {
+  const [showSuggestion, setShowSuggestion] = useState(false);
   const primaryImage = item.images?.find(img => img.is_primary)?.image_url || 
                        item.images?.[0]?.image_url;
 
@@ -62,6 +65,17 @@ const FoodItemCard: React.FC<FoodItemCardProps> = ({ item, quantity, onQuantityC
 
           {/* Quantity Controls */}
           <div className="flex items-center justify-end gap-2 mt-2">
+            {guestCount && guestCount > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-xs text-indoor-events hover:bg-indoor-events/10"
+                onClick={() => setShowSuggestion(true)}
+              >
+                <Wand2 className="h-3 w-3 mr-1" />
+                Auto
+              </Button>
+            )}
             {quantity > 0 ? (
               <div className="flex items-center gap-2">
                 <Button
@@ -96,6 +110,27 @@ const FoodItemCard: React.FC<FoodItemCardProps> = ({ item, quantity, onQuantityC
           </div>
         </div>
       </div>
+
+      {/* Auto Calculation Dialog */}
+      {guestCount && guestCount > 0 && (
+        <FoodQuantitySuggestionDialog
+          open={showSuggestion}
+          onOpenChange={setShowSuggestion}
+          item={{
+            id: item.id,
+            name: item.name,
+            price: item.price,
+            serves_persons: item.serves_persons ?? null,
+          }}
+          guestCount={guestCount}
+          currentQuantity={quantity}
+          onAccept={(qty) => {
+            onQuantityChange(qty);
+            setShowSuggestion(false);
+          }}
+          onCancel={() => setShowSuggestion(false)}
+        />
+      )}
     </Card>
   );
 };

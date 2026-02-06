@@ -329,6 +329,7 @@ const IndoorEvents: React.FC = () => {
           <QuickBookingFoodSelection
             selectedItems={selectedItems}
             onItemsChange={setSelectedItems}
+            guestCount={guestCount}
           />
           
           <div className="flex gap-3 pt-4 border-t">
