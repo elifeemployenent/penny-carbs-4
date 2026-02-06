@@ -146,7 +146,9 @@ export function useAvailableDeliveryOrders() {
     queryFn: async () => {
       if (!profile) return [];
 
-      // For registered partners, show orders in their ward that aren't assigned
+      // Build list of all panchayat IDs this staff is connected to
+      const panchayatIds = [profile.panchayat_id, ...(profile.assigned_panchayat_ids || [])].filter(Boolean);
+
       const { data, error } = await supabase
         .from('orders')
         .select(`
@@ -164,7 +166,7 @@ export function useAvailableDeliveryOrders() {
           created_at,
           customer_id
         `)
-        .eq('panchayat_id', profile.panchayat_id)
+        .in('panchayat_id', panchayatIds)
         .in('service_type', ['cloud_kitchen', 'homemade'])
         .eq('cook_status', 'ready')
         .eq('delivery_status', 'pending')
