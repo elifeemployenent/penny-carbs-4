@@ -18,11 +18,13 @@ interface SelectedItem {
 interface QuickBookingFoodSelectionProps {
   selectedItems: Map<string, SelectedItem>;
   onItemsChange: (items: Map<string, SelectedItem>) => void;
+  guestCount?: number;
 }
 
 const QuickBookingFoodSelection: React.FC<QuickBookingFoodSelectionProps> = ({
   selectedItems,
   onItemsChange,
+  guestCount,
 }) => {
   const { data: items, isLoading: itemsLoading } = useIndoorEventItems();
   const { data: categories, isLoading: categoriesLoading } = useIndoorEventCategories();
@@ -176,6 +178,7 @@ const QuickBookingFoodSelection: React.FC<QuickBookingFoodSelectionProps> = ({
                 item={item}
                 quantity={selectedItems.get(item.id)?.quantity || 0}
                 onQuantityChange={(quantity) => handleQuantityChange(item, quantity)}
+                guestCount={guestCount}
               />
             ))
           )}
