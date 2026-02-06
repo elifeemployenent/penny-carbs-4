@@ -65,10 +65,10 @@ const BudgetSummaryStep: React.FC<BudgetSummaryStepProps> = ({
               {plannerData.selectedFoods.map((food) => (
                 <div key={food.id} className="flex justify-between text-sm">
                   <span className="text-muted-foreground">
-                    {food.name} × {food.quantity} × {plannerData.guestCount}
+                    {food.name} × {food.quantity}
                   </span>
                   <span className="font-medium">
-                    ₹{(food.price * food.quantity * plannerData.guestCount).toLocaleString()}
+                    ₹{(food.price * food.quantity).toLocaleString()}
                   </span>
                 </div>
               ))}

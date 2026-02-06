@@ -162,7 +162,7 @@ const FoodSelectionStep: React.FC<FoodSelectionStepProps> = ({
   };
 
   const foodTotal = selectedFoods.reduce(
-    (sum, f) => sum + f.price * f.quantity * guestCount,
+    (sum, f) => sum + f.price * f.quantity,
     0
   );
 
@@ -263,7 +263,7 @@ const FoodSelectionStep: React.FC<FoodSelectionStepProps> = ({
                         </p>
                         {qty > 0 && (
                           <p className="text-xs text-muted-foreground">
-                            {qty} × {guestCount} = ₹{(item.price * qty * guestCount).toLocaleString()}
+                            {qty} units = ₹{(item.price * qty).toLocaleString()}
                           </p>
                         )}
                       </div>

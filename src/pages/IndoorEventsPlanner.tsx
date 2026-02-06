@@ -142,7 +142,7 @@ const IndoorEventsPlanner: React.FC = () => {
   // Calculate totals
   const totals = useMemo(() => {
     const foodTotal = plannerData.selectedFoods.reduce(
-      (sum, food) => sum + food.price * food.quantity * plannerData.guestCount,
+      (sum, food) => sum + food.price * food.quantity,
       0
     );
 
