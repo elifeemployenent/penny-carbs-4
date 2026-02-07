@@ -103,6 +103,13 @@ const OrderDetail: React.FC = () => {
     );
   }
 
+  const deliveryStatusConfig: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
+    pending: { label: 'Pending', color: 'bg-muted text-muted-foreground', icon: <Clock className="h-4 w-4" /> },
+    assigned: { label: 'Assigned', color: 'bg-primary text-primary-foreground', icon: <Truck className="h-4 w-4" /> },
+    picked_up: { label: 'Picked Up', color: 'bg-warning text-warning-foreground', icon: <Truck className="h-4 w-4" /> },
+    delivered: { label: 'Delivered', color: 'bg-success text-success-foreground', icon: <CheckCircle className="h-4 w-4" /> },
+  };
+
   if (!order) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4 pb-20">
@@ -155,6 +162,39 @@ const OrderDetail: React.FC = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Delivery Status */}
+        {order.delivery_status && (
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Delivery Status</p>
+                  {(() => {
+                    const ds = deliveryStatusConfig[order.delivery_status] || { label: order.delivery_status, color: 'bg-muted text-muted-foreground', icon: <Truck className="h-4 w-4" /> };
+                    return (
+                      <Badge className={`mt-1 gap-1 ${ds.color}`}>
+                        {ds.icon}
+                        {ds.label}
+                      </Badge>
+                    );
+                  })()}
+                </div>
+                {order.delivery_eta && (
+                  <div className="text-right">
+                    <p className="text-sm text-muted-foreground">ETA</p>
+                    <p className="font-medium">
+                      {new Date(order.delivery_eta).toLocaleTimeString('en-IN', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Order Items */}
         <Card>

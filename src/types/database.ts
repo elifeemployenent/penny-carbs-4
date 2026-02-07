@@ -120,6 +120,9 @@ export interface Order {
   assigned_delivery_id: string | null;
   event_date: string | null;
   event_details: string | null;
+  delivery_status: string | null;
+  delivery_eta: string | null;
+  cook_status: string | null;
   created_at: string;
   updated_at: string;
 }
