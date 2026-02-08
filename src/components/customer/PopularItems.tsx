@@ -10,6 +10,15 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Plus, Clock, ChevronRight } from 'lucide-react';
+import { calculatePlatformMargin } from '@/lib/priceUtils';
+
+// Helper to calculate customer display price (base + margin)
+const getCustomerPrice = (item: FoodItemWithImages): number => {
+  const marginType = ((item as any).platform_margin_type || 'percent') as 'percent' | 'fixed';
+  const marginValue = (item as any).platform_margin_value || 0;
+  const margin = calculatePlatformMargin(item.price, marginType, marginValue);
+  return item.price + margin;
+};
 
 interface PopularItemsProps {
   serviceType: ServiceType;
@@ -154,7 +163,7 @@ const PopularItems: React.FC<PopularItemsProps> = ({
                   </div>
                 )}
                 <div className="mt-2 flex items-center justify-between">
-                  <span className="font-semibold text-foreground">₹{item.price.toFixed(0)}</span>
+                  <span className="font-semibold text-foreground">₹{getCustomerPrice(item).toFixed(0)}</span>
                   {isIndoorEvents ? (
                     <Button
                       size="sm"

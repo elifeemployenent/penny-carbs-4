@@ -11,6 +11,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Plus, Star, Percent } from 'lucide-react';
+import { calculatePlatformMargin } from '@/lib/priceUtils';
 
 interface FeaturedItem {
   id: string;
@@ -21,8 +22,18 @@ interface FeaturedItem {
   service_type: string;
   available_all_panchayats: boolean | null;
   available_panchayat_ids: string[] | null;
+  platform_margin_type: string | null;
+  platform_margin_value: number | null;
   images: { image_url: string; is_primary: boolean }[];
 }
+
+// Helper to calculate customer display price (base + margin)
+const getCustomerPrice = (item: FeaturedItem): number => {
+  const marginType = (item.platform_margin_type || 'percent') as 'percent' | 'fixed';
+  const marginValue = item.platform_margin_value || 0;
+  const margin = calculatePlatformMargin(item.price, marginType, marginValue);
+  return item.price + margin;
+};
 
 const FeaturedItems: React.FC = () => {
   const navigate = useNavigate();
@@ -44,6 +55,8 @@ const FeaturedItems: React.FC = () => {
           service_type,
           available_all_panchayats,
           available_panchayat_ids,
+          platform_margin_type,
+          platform_margin_value,
           images:food_item_images(image_url, is_primary)
         `)
         .eq('is_featured', true)
@@ -81,13 +94,14 @@ const FeaturedItems: React.FC = () => {
   };
 
   const getDiscountedPrice = (item: FeaturedItem) => {
+    const customerPrice = getCustomerPrice(item);
     if (item.discount_percent && item.discount_percent > 0) {
-      return item.price - (item.price * item.discount_percent / 100);
+      return customerPrice - (customerPrice * item.discount_percent / 100);
     }
     if (item.discount_amount && item.discount_amount > 0) {
-      return item.price - item.discount_amount;
+      return customerPrice - item.discount_amount;
     }
-    return item.price;
+    return customerPrice;
   };
 
   const hasDiscount = (item: FeaturedItem) => {
@@ -173,7 +187,7 @@ const FeaturedItems: React.FC = () => {
                   <div className="flex items-center gap-1">
                     {showDiscount && (
                       <span className="text-xs text-muted-foreground line-through">
-                        ₹{item.price.toFixed(0)}
+                        ₹{getCustomerPrice(item).toFixed(0)}
                       </span>
                     )}
                     <span className="font-semibold text-foreground">

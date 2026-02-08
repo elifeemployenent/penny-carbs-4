@@ -4,6 +4,15 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Leaf, Plus, Minus, ChefHat, Star } from 'lucide-react';
 import type { CustomerCloudKitchenItem } from '@/hooks/useCustomerCloudKitchen';
+import { calculatePlatformMargin } from '@/lib/priceUtils';
+
+// Helper to calculate customer display price (base + margin)
+const getCustomerPrice = (item: CustomerCloudKitchenItem): number => {
+  const marginType = ((item as any).platform_margin_type || 'percent') as 'percent' | 'fixed';
+  const marginValue = (item as any).platform_margin_value || 0;
+  const margin = calculatePlatformMargin(item.price, marginType, marginValue);
+  return item.price + margin;
+};
 
 interface SetItemCardProps {
   item: CustomerCloudKitchenItem;
@@ -18,7 +27,8 @@ const SetItemCard: React.FC<SetItemCardProps> = ({
 }) => {
   const setSize = item.set_size || 1;
   const minSets = item.min_order_sets || 1;
-  const pricePerSet = item.price * setSize;
+  const customerPrice = getCustomerPrice(item);
+  const pricePerSet = customerPrice * setSize;
   const totalPieces = quantity * setSize;
 
   const handleDecrease = () => {
