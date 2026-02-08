@@ -407,6 +407,53 @@ export type Database = {
           },
         ]
       }
+      customer_addresses: {
+        Row: {
+          address_label: string | null
+          created_at: string
+          full_address: string
+          id: string
+          is_default: boolean
+          landmark: string | null
+          panchayat_id: string | null
+          updated_at: string
+          user_id: string
+          ward_number: number | null
+        }
+        Insert: {
+          address_label?: string | null
+          created_at?: string
+          full_address: string
+          id?: string
+          is_default?: boolean
+          landmark?: string | null
+          panchayat_id?: string | null
+          updated_at?: string
+          user_id: string
+          ward_number?: number | null
+        }
+        Update: {
+          address_label?: string | null
+          created_at?: string
+          full_address?: string
+          id?: string
+          is_default?: boolean
+          landmark?: string | null
+          panchayat_id?: string | null
+          updated_at?: string
+          user_id?: string
+          ward_number?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_addresses_panchayat_id_fkey"
+            columns: ["panchayat_id"]
+            isOneToOne: false
+            referencedRelation: "panchayats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_wallet_transactions: {
         Row: {
           amount: number
@@ -868,8 +915,10 @@ export type Database = {
           id: string
           notes: string | null
           order_id: string
+          rent_amount: number | null
           updated_at: string
           vehicle_number: string
+          vehicle_type: string | null
         }
         Insert: {
           created_at?: string
@@ -878,8 +927,10 @@ export type Database = {
           id?: string
           notes?: string | null
           order_id: string
+          rent_amount?: number | null
           updated_at?: string
           vehicle_number: string
+          vehicle_type?: string | null
         }
         Update: {
           created_at?: string
@@ -888,8 +939,10 @@ export type Database = {
           id?: string
           notes?: string | null
           order_id?: string
+          rent_amount?: number | null
           updated_at?: string
           vehicle_number?: string
+          vehicle_type?: string | null
         }
         Relationships: [
           {
@@ -1487,6 +1540,36 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      vehicle_rent_rules: {
+        Row: {
+          created_at: string
+          display_order: number
+          id: string
+          is_active: boolean
+          minimum_rent: number
+          updated_at: string
+          vehicle_type: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          minimum_rent?: number
+          updated_at?: string
+          vehicle_type: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          minimum_rent?: number
+          updated_at?: string
+          vehicle_type?: string
         }
         Relationships: []
       }

@@ -8,10 +8,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { ArrowLeft, MapPin, ShoppingBag, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import AddressSelector from '@/components/customer/AddressSelector';
 
 const Checkout: React.FC = () => {
   const navigate = useNavigate();
@@ -163,32 +163,30 @@ const Checkout: React.FC = () => {
       </header>
 
       <main className="p-4 space-y-4">
-        {/* Delivery Location - From User Profile (Read-Only) */}
+        {/* Delivery Location */}
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
               <MapPin className="h-4 w-4" />
-              Delivery Location
+              Delivery Address
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Location from profile - read only display */}
+            {/* Location from profile */}
             <div className="rounded-lg bg-muted p-3 flex items-center gap-3">
               <MapPin className="h-5 w-5 text-primary shrink-0" />
               <div>
                 <p className="font-medium">Ward {selectedWardNumber}, {selectedPanchayat?.name}</p>
-                <p className="text-xs text-muted-foreground">From your registered profile</p>
+                <p className="text-xs text-muted-foreground">Your registered location</p>
               </div>
             </div>
 
+            {/* Address Selector with saved addresses */}
             <div className="space-y-2">
-              <Label htmlFor="address">Delivery Address *</Label>
-              <Textarea
-                id="address"
-                placeholder="Enter your complete delivery address (House name, street, landmark...)"
-                value={deliveryAddress}
-                onChange={(e) => setDeliveryAddress(e.target.value)}
-                rows={3}
+              <Label>Select or enter delivery address *</Label>
+              <AddressSelector
+                selectedAddress={deliveryAddress}
+                onAddressChange={setDeliveryAddress}
               />
             </div>
 
