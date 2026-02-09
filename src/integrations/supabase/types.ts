@@ -1694,7 +1694,19 @@ export type Database = {
         Returns: boolean
       }
       is_cook: { Args: { _user_id: string }; Returns: boolean }
+      is_cook_assigned_to_order: {
+        Args: { _order_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_delivery_staff: { Args: { _user_id: string }; Returns: boolean }
+      is_order_assigned_cook: {
+        Args: { _cook_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_order_customer: {
+        Args: { _order_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "super_admin" | "admin" | "cook" | "delivery_staff" | "customer"
