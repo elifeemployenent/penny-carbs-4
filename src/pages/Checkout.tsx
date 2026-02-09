@@ -116,7 +116,8 @@ const Checkout: React.FC = () => {
           order_number: orderNumber,
           customer_id: user.id,
           service_type: serviceType as 'indoor_events' | 'cloud_kitchen' | 'homemade',
-          total_amount: totalAmount,
+          total_amount: totalAmount + deliveryFee,
+          delivery_amount: deliveryFee > 0 ? deliveryFee : null,
           panchayat_id: selectedPanchayat!.id,
           ward_number: selectedWardNumber!,
           delivery_address: deliveryAddress,
@@ -207,7 +208,7 @@ const Checkout: React.FC = () => {
     }
   };
 
-  const deliveryFee = 0; // Free delivery for now
+  const deliveryFee = serviceType === 'homemade' ? 30 : 0;
   const grandTotal = totalAmount + deliveryFee;
 
   return (
@@ -283,7 +284,11 @@ const Checkout: React.FC = () => {
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Delivery Fee</span>
-              <span className="text-green-600">FREE</span>
+              {deliveryFee > 0 ? (
+                <span>₹{deliveryFee}</span>
+              ) : (
+                <span className="text-green-600">FREE</span>
+              )}
             </div>
             <Separator />
             <div className="flex justify-between font-semibold">
