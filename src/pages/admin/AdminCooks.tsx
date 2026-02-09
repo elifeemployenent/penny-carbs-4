@@ -18,7 +18,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
-import { ArrowLeft, Plus, ChefHat, Phone, MapPin, Loader2, Calendar, Users, Search, User, CheckCircle, UtensilsCrossed, MessageSquare } from 'lucide-react';
+import { Plus, ChefHat, Phone, MapPin, Loader2, Calendar, Users, Search, User, CheckCircle, UtensilsCrossed, MessageSquare } from 'lucide-react';
+import AdminNavbar from '@/components/admin/AdminNavbar';
 import { format } from 'date-fns';
 import type { Cook } from '@/types/cook';
 import CookDishesTab from '@/components/admin/CookDishesTab';
@@ -412,16 +413,12 @@ const AdminCooks: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen bg-background pb-6">
-      {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b bg-card/95 backdrop-blur">
-        <div className="container flex h-14 items-center justify-between px-4">
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" onClick={() => navigate('/admin')}>
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <h1 className="text-lg font-semibold">Cook Management</h1>
-          </div>
+    <div className="min-h-screen bg-background pt-28 pb-6">
+      <AdminNavbar />
+
+      <main className="p-4">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold">Cook Management</h2>
           <Dialog open={isDialogOpen} onOpenChange={handleDialogChange}>
             <DialogTrigger asChild>
               <Button size="sm">
@@ -629,9 +626,6 @@ const AdminCooks: React.FC = () => {
             </DialogContent>
           </Dialog>
         </div>
-      </header>
-
-      <main className="container px-4 py-4">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="w-full mb-4 grid grid-cols-5">
             <TabsTrigger value="cooks">

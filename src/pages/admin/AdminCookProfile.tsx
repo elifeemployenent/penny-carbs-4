@@ -16,7 +16,6 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { 
-  ArrowLeft, 
   ChefHat, 
   Phone, 
   MapPin, 
@@ -29,6 +28,7 @@ import {
   Clock,
   History
 } from 'lucide-react';
+import AdminNavbar from '@/components/admin/AdminNavbar';
 import { format } from 'date-fns';
 import type { Cook } from '@/types/cook';
 
@@ -231,19 +231,8 @@ const AdminCookProfile: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-6">
-      {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b bg-card/95 backdrop-blur">
-        <div className="container flex h-14 items-center gap-2 px-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/admin/cooks')}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div className="flex items-center gap-2">
-            <ChefHat className="h-5 w-5 text-primary" />
-            <h1 className="text-lg font-semibold">{cook.kitchen_name}</h1>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-background pt-28 pb-6">
+      <AdminNavbar />
 
       <main className="container px-4 py-4 space-y-4">
         {/* Cook Profile Card */}

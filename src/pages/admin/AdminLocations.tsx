@@ -17,8 +17,9 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { ArrowLeft, Plus, Edit2, Trash2, MapPin } from 'lucide-react';
+import { Plus, Edit2, Trash2, MapPin } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import AdminNavbar from '@/components/admin/AdminNavbar';
 
 const AdminLocations: React.FC = () => {
   const navigate = useNavigate();
@@ -147,23 +148,17 @@ const AdminLocations: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-50 border-b bg-card">
-        <div className="flex h-14 items-center justify-between px-4">
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" onClick={() => navigate('/admin')}>
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <h1 className="font-display text-lg font-semibold">Locations</h1>
-          </div>
+    <div className="min-h-screen bg-background pt-28">
+      <AdminNavbar />
+
+      <main className="p-4">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold">Locations</h2>
           <Button size="sm" onClick={() => handleOpenPanchayatDialog()}>
             <Plus className="mr-2 h-4 w-4" />
             Add Panchayat
           </Button>
         </div>
-      </header>
-
-      <main className="p-4">
         {isLoading ? (
           <div className="space-y-4">
             {[1, 2, 3].map((i) => (

@@ -62,7 +62,7 @@ const AdminNavbar: React.FC = () => {
     <header className="fixed top-0 left-0 right-0 z-50 border-b bg-card">
       <div className="flex h-14 items-center justify-between px-4">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/')}>
+          <Button variant="ghost" size="icon" onClick={() => navigate('/admin')}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <h1 className="font-display text-lg font-semibold">Admin Panel</h1>

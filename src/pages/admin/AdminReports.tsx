@@ -9,7 +9,6 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { 
-  ArrowLeft, 
   Download, 
   FileSpreadsheet, 
   BarChart3,
@@ -18,6 +17,7 @@ import {
   TrendingUp,
   Building2
 } from 'lucide-react';
+import AdminNavbar from '@/components/admin/AdminNavbar';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useSalesReport, useCookPerformanceReport, useDeliverySettlementReport, useReferralReport, usePanchayats, useVehicleRentReport } from '@/hooks/useReports';
@@ -102,18 +102,8 @@ const AdminReports: React.FC = () => {
   const pieColors = ['hsl(var(--success))', 'hsl(var(--destructive))', 'hsl(var(--warning))'];
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-50 border-b bg-card">
-        <div className="flex h-16 items-center gap-3 px-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/admin')}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div>
-            <h1 className="font-display text-lg font-semibold">Reports & Analytics</h1>
-            <p className="text-xs text-muted-foreground">View and export reports</p>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-background pt-28">
+      <AdminNavbar />
 
       <main className="p-4">
         {/* Filters */}
