@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useDeliveryRules } from '@/hooks/useDeliveryRules';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -11,6 +12,28 @@ const Cart: React.FC = () => {
   const navigate = useNavigate();
   const { items, totalAmount, updateQuantity, removeFromCart, isLoading } = useCart();
   const { user } = useAuth();
+  const { rules } = useDeliveryRules();
+
+  const deliveryFee = useMemo(() => {
+    if (!items.length || !rules?.length) return 0;
+
+    // Determine the service type from cart items
+    const serviceType = items[0]?.food_item?.service_type;
+    if (!serviceType) return 0;
+
+    // Find active rule for this service type
+    const activeRule = rules.find(
+      (r) => r.service_type === serviceType && r.is_active
+    );
+    if (!activeRule) return 0;
+
+    // Free delivery if subtotal exceeds threshold
+    if (activeRule.free_delivery_above != null && totalAmount >= activeRule.free_delivery_above) {
+      return 0;
+    }
+
+    return activeRule.min_delivery_charge;
+  }, [items, rules, totalAmount]);
 
   const handleCheckout = () => {
     if (!user) {
@@ -151,12 +174,16 @@ const Cart: React.FC = () => {
           </div>
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Delivery Fee</span>
-            <span className="text-success">FREE</span>
+            {deliveryFee > 0 ? (
+              <span>₹{deliveryFee.toFixed(0)}</span>
+            ) : (
+              <span className="text-green-600">FREE</span>
+            )}
           </div>
           <Separator />
           <div className="flex items-center justify-between font-semibold">
             <span>Total</span>
-            <span className="text-lg">₹{totalAmount.toFixed(0)}</span>
+            <span className="text-lg">₹{(totalAmount + deliveryFee).toFixed(0)}</span>
           </div>
           <Button className="w-full h-12 text-base" onClick={handleCheckout}>
             Proceed to Checkout
