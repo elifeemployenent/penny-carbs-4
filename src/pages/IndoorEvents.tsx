@@ -166,12 +166,8 @@ const IndoorEvents: React.FC = () => {
         <div className="space-y-4">
           {/* Quick Booking Card */}
           <div 
-            className={`relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-400 via-orange-500 to-red-500 p-6 transition-all ${
-              selectedEventType 
-                ? 'cursor-pointer hover:scale-[1.02] hover:shadow-xl active:scale-[0.98]' 
-                : 'opacity-60 cursor-not-allowed'
-            }`}
-            onClick={() => selectedEventType && handleBookingClick('quick')}
+            className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-400 via-orange-500 to-red-500 p-6 transition-all cursor-pointer hover:scale-[1.02] hover:shadow-xl active:scale-[0.98]"
+            onClick={() => navigate('/indoor-events/quick-booking')}
           >
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
             <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/2" />
