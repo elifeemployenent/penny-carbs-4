@@ -142,6 +142,7 @@ const PopularItems: React.FC<PopularItemsProps> = ({
         {items.map((item) => {
           const primaryImage = item.images?.find((img) => img.is_primary) || item.images?.[0];
           const isIndoorEvents = serviceType === 'indoor_events';
+          const isCloudKitchen = serviceType === 'cloud_kitchen';
 
           return (
             <Card
@@ -150,7 +151,9 @@ const PopularItems: React.FC<PopularItemsProps> = ({
               onClick={() =>
                 isIndoorEvents
                   ? requireAuth(() => navigate('/indoor-events'))
-                  : handleItemClick(item.id)
+                  : isCloudKitchen
+                    ? navigate('/cloud-kitchen')
+                    : handleItemClick(item.id)
               }
             >
               <div className="relative h-28 w-full overflow-hidden bg-secondary">
@@ -188,6 +191,18 @@ const PopularItems: React.FC<PopularItemsProps> = ({
                       }}
                     >
                       Book
+                    </Button>
+                  ) : isCloudKitchen ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 rounded-full border-primary text-primary text-xs px-2"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate('/cloud-kitchen');
+                      }}
+                    >
+                      Order
                     </Button>
                   ) : (
                     <Button
