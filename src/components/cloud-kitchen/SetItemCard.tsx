@@ -18,7 +18,7 @@ export interface GroupedFoodItem {
   name: string;
   description: string | null;
   is_vegetarian: boolean;
-  is_coming_soon: boolean;
+  is_coming_soon_cloud_kitchen: boolean;
   set_size: number;
   min_order_sets: number;
   images: { id: string; image_url: string; is_primary: boolean }[];
@@ -58,7 +58,7 @@ const SetItemCard: React.FC<SetItemCardProps> = ({
   const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
 
   return (
-    <Card className={`overflow-hidden ${group.hasNoCook || group.is_coming_soon ? 'opacity-60' : ''}`}>
+    <Card className={`overflow-hidden ${group.hasNoCook || group.is_coming_soon_cloud_kitchen ? 'opacity-60' : ''}`}>
       {/* Main item row */}
       <div className="flex">
         <div className="w-28 h-32 bg-muted flex-shrink-0 relative">
@@ -67,10 +67,10 @@ const SetItemCard: React.FC<SetItemCardProps> = ({
           ) : (
             <div className="w-full h-full flex items-center justify-center text-muted-foreground">No image</div>
           )}
-          {(group.hasNoCook || group.is_coming_soon) && (
+          {(group.hasNoCook || group.is_coming_soon_cloud_kitchen) && (
             <div className="absolute inset-0 bg-background/50 flex items-center justify-center">
               <Badge variant="secondary" className="text-xs">
-                {group.is_coming_soon ? (
+                {group.is_coming_soon_cloud_kitchen ? (
                   <><Clock className="h-3 w-3 mr-1" />Coming Soon</>
                 ) : 'Coming Soon'}
               </Badge>
@@ -107,7 +107,7 @@ const SetItemCard: React.FC<SetItemCardProps> = ({
           </div>
 
           {/* Expand/collapse cooks */}
-          {orderableCooks.length > 0 && !group.is_coming_soon && (
+          {orderableCooks.length > 0 && !group.is_coming_soon_cloud_kitchen && (
             <div className="mt-2">
               <Button
                 variant="outline"
@@ -125,9 +125,9 @@ const SetItemCard: React.FC<SetItemCardProps> = ({
             </div>
           )}
 
-          {(group.hasNoCook || group.is_coming_soon) && (
+          {(group.hasNoCook || group.is_coming_soon_cloud_kitchen) && (
             <Badge variant="outline" className="text-xs text-muted-foreground mt-2">
-              {group.is_coming_soon ? 'Coming soon - not available for order yet' : 'Not available for order'}
+              {group.is_coming_soon_cloud_kitchen ? 'Coming soon - not available for order yet' : 'Not available for order'}
             </Badge>
           )}
         </CardContent>

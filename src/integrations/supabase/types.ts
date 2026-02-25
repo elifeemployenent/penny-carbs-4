@@ -831,6 +831,8 @@ export type Database = {
           id: string
           is_available: boolean
           is_coming_soon: boolean
+          is_coming_soon_cloud_kitchen: boolean
+          is_coming_soon_home_delivery: boolean
           is_featured: boolean | null
           is_vegetarian: boolean
           max_images: number
@@ -862,6 +864,8 @@ export type Database = {
           id?: string
           is_available?: boolean
           is_coming_soon?: boolean
+          is_coming_soon_cloud_kitchen?: boolean
+          is_coming_soon_home_delivery?: boolean
           is_featured?: boolean | null
           is_vegetarian?: boolean
           max_images?: number
@@ -893,6 +897,8 @@ export type Database = {
           id?: string
           is_available?: boolean
           is_coming_soon?: boolean
+          is_coming_soon_cloud_kitchen?: boolean
+          is_coming_soon_home_delivery?: boolean
           is_featured?: boolean | null
           is_vegetarian?: boolean
           max_images?: number

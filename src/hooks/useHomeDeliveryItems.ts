@@ -9,7 +9,7 @@ export interface HomeDeliveryItem {
   price: number;
   is_vegetarian: boolean;
   is_available: boolean;
-  is_coming_soon: boolean;
+  is_coming_soon_home_delivery: boolean;
   preparation_time_minutes: number | null;
   category_id: string | null;
   category_name?: string;
@@ -35,7 +35,7 @@ export function useHomeDeliveryItems() {
           price,
           is_vegetarian,
           is_available,
-          is_coming_soon,
+          is_coming_soon_home_delivery,
           preparation_time_minutes,
           category_id,
           set_size,
@@ -116,7 +116,7 @@ export function useToggleComingSoon() {
     mutationFn: async ({ itemId, isComingSoon }: { itemId: string; isComingSoon: boolean }) => {
       const { error } = await supabase
         .from('food_items')
-        .update({ is_coming_soon: isComingSoon } as any)
+        .update({ is_coming_soon_home_delivery: isComingSoon } as any)
         .eq('id', itemId);
 
       if (error) throw error;

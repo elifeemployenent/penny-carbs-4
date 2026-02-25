@@ -9,7 +9,7 @@ export interface CloudKitchenItem {
   price: number;
   is_vegetarian: boolean;
   is_available: boolean;
-  is_coming_soon: boolean;
+  is_coming_soon_cloud_kitchen: boolean;
   set_size: number;
   min_order_sets: number;
   cloud_kitchen_slot_id: string | null;
@@ -35,7 +35,7 @@ export function useCloudKitchenItems(slotId: string | null) {
           price,
           is_vegetarian,
           is_available,
-          is_coming_soon,
+          is_coming_soon_cloud_kitchen,
           set_size,
           min_order_sets,
           cloud_kitchen_slot_id,
@@ -64,7 +64,7 @@ export function useAvailableItems() {
           price,
           is_vegetarian,
           is_available,
-          is_coming_soon,
+          is_coming_soon_cloud_kitchen,
           set_size,
           min_order_sets,
           cloud_kitchen_slot_id,
@@ -167,7 +167,7 @@ export function useToggleItemComingSoon() {
     mutationFn: async ({ itemId, isComingSoon }: { itemId: string; isComingSoon: boolean }) => {
       const { error } = await supabase
         .from('food_items')
-        .update({ is_coming_soon: isComingSoon })
+        .update({ is_coming_soon_cloud_kitchen: isComingSoon } as any)
         .eq('id', itemId);
 
       if (error) throw error;

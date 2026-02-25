@@ -21,7 +21,7 @@ interface HomemadeItem {
   description: string | null;
   price: number;
   is_vegetarian: boolean;
-  is_coming_soon: boolean;
+  is_coming_soon_home_delivery: boolean;
   preparation_time_minutes: number | null;
   category_id: string | null;
   platform_margin_type: string | null;
@@ -75,7 +75,7 @@ const HomemadeOrder: React.FC = () => {
           .from('food_items')
           .select(`
             id, name, description, price, is_vegetarian, preparation_time_minutes,
-            category_id, platform_margin_type, platform_margin_value, is_coming_soon,
+            category_id, platform_margin_type, platform_margin_value, is_coming_soon_home_delivery,
             images:food_item_images(id, image_url, is_primary),
             category:food_categories(id, name)
           `)
@@ -107,12 +107,12 @@ const HomemadeOrder: React.FC = () => {
 
   const handleAddToCart = async (e: React.MouseEvent, item: HomemadeItem) => {
     e.stopPropagation();
-    if (item.is_coming_soon) return;
+    if (item.is_coming_soon_home_delivery) return;
     requireAuth(() => addToCart(item.id));
   };
 
   const handleItemClick = (item: HomemadeItem) => {
-    if (item.is_coming_soon) return;
+    if (item.is_coming_soon_home_delivery) return;
     requireAuth(() => navigate(`/item/${item.id}`));
   };
 
@@ -192,7 +192,7 @@ const HomemadeOrder: React.FC = () => {
           <div className="grid grid-cols-2 gap-3">
             {filteredItems.map(item => {
               const primaryImage = item.images?.find(img => img.is_primary) || item.images?.[0];
-              const isComingSoon = item.is_coming_soon;
+              const isComingSoon = item.is_coming_soon_home_delivery;
 
               return (
                 <Card
