@@ -102,7 +102,7 @@ const ItemDetail: React.FC = () => {
   const serviceTypes = (item as any)?.service_types || [];
   const isHomemade = item?.service_type === 'homemade' || serviceTypes.includes('homemade');
   const isIndoorEvents = item?.service_type === 'indoor_events';
-  const isComingSoon = (item as any)?.is_coming_soon === true;
+  const isComingSoon = isHomemade ? (item as any)?.is_coming_soon_home_delivery === true : (item as any)?.is_coming_soon_cloud_kitchen === true;
 
   // Calculate customer price - use selected cook's custom_price if available, else lowest cook price
   const customerPrice = useMemo(() => {

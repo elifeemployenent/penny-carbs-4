@@ -13,7 +13,7 @@ export interface CustomerCloudKitchenItem {
   description: string | null;
   price: number;
   is_vegetarian: boolean;
-  is_coming_soon: boolean;
+  is_coming_soon_cloud_kitchen: boolean;
   set_size: number;
   min_order_sets: number;
   cloud_kitchen_slot_id: string | null;
@@ -166,7 +166,7 @@ export function useCustomerDivisionItems(divisionId: string | null) {
           description,
           price,
           is_vegetarian,
-          is_coming_soon,
+          is_coming_soon_cloud_kitchen,
           set_size,
           min_order_sets,
           cloud_kitchen_slot_id,
@@ -228,7 +228,7 @@ export function useCustomerDivisionItems(divisionId: string | null) {
               description: item.description,
               price: effectivePrice,
               is_vegetarian: item.is_vegetarian,
-              is_coming_soon: item.is_coming_soon || false,
+              is_coming_soon_cloud_kitchen: item.is_coming_soon_cloud_kitchen || false,
               set_size: item.set_size || 1,
               min_order_sets: item.min_order_sets || 1,
               cloud_kitchen_slot_id: item.cloud_kitchen_slot_id,
@@ -241,7 +241,7 @@ export function useCustomerDivisionItems(divisionId: string | null) {
                 rating: cd.cooks.rating,
               },
               unique_key: `${item.id}_${cd.cooks.id}`,
-              is_orderable: !item.is_coming_soon,
+              is_orderable: !item.is_coming_soon_cloud_kitchen,
             });
           });
         } else {
@@ -252,7 +252,7 @@ export function useCustomerDivisionItems(divisionId: string | null) {
             description: item.description,
             price: item.price,
             is_vegetarian: item.is_vegetarian,
-            is_coming_soon: item.is_coming_soon || false,
+            is_coming_soon_cloud_kitchen: item.is_coming_soon_cloud_kitchen || false,
             set_size: item.set_size || 1,
             min_order_sets: item.min_order_sets || 1,
             cloud_kitchen_slot_id: item.cloud_kitchen_slot_id,

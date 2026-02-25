@@ -136,14 +136,14 @@ const DivisionItemsManager: React.FC<DivisionItemsManagerProps> = ({
                 {items?.map((item) => {
                   const totalMinQty = (item.set_size || 1) * (item.min_order_sets || 1);
                   return (
-                    <TableRow key={item.id} className={item.is_coming_soon ? 'bg-muted/40' : ''}>
+                    <TableRow key={item.id} className={item.is_coming_soon_cloud_kitchen ? 'bg-muted/40' : ''}>
                       <TableCell>
                         <div className="flex items-center gap-2">
                           {item.is_vegetarian && (
                             <Leaf className="h-4 w-4 text-green-600" />
                           )}
                           <span className="font-medium">{item.name}</span>
-                          {item.is_coming_soon && (
+                          {item.is_coming_soon_cloud_kitchen && (
                             <Badge variant="secondary" className="text-xs">
                               <Clock className="h-3 w-3 mr-1" />
                               Coming Soon
@@ -163,7 +163,7 @@ const DivisionItemsManager: React.FC<DivisionItemsManagerProps> = ({
                       </TableCell>
                       <TableCell>
                         <Switch
-                          checked={item.is_coming_soon}
+                          checked={item.is_coming_soon_cloud_kitchen}
                           onCheckedChange={(checked) =>
                             toggleComingSoon.mutate({ itemId: item.id, isComingSoon: checked })
                           }

@@ -183,7 +183,7 @@ const HomeDeliveryItems: React.FC<HomeDeliveryItemsProps> = ({ onBack }) => {
                       </TableCell>
                       <TableCell className="text-right">
                         <Switch
-                          checked={item.is_coming_soon}
+                          checked={item.is_coming_soon_home_delivery}
                           onCheckedChange={(checked) =>
                             toggleComingSoon.mutate({ itemId: item.id, isComingSoon: checked })
                           }
@@ -195,7 +195,7 @@ const HomeDeliveryItems: React.FC<HomeDeliveryItemsProps> = ({ onBack }) => {
                           onCheckedChange={(checked) =>
                             toggleItem.mutate({ itemId: item.id, isAvailable: checked })
                           }
-                          disabled={item.is_coming_soon}
+                          disabled={item.is_coming_soon_home_delivery}
                         />
                       </TableCell>
                       <TableCell className="text-right">

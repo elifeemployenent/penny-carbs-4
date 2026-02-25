@@ -157,7 +157,7 @@ const PopularItems: React.FC<PopularItemsProps> = ({
           const primaryImage = item.images?.find((img) => img.is_primary) || item.images?.[0];
           const isIndoorEvents = serviceType === 'indoor_events';
           const isCloudKitchen = serviceType === 'cloud_kitchen';
-          const isComingSoon = (item as any).is_coming_soon === true;
+          const isComingSoon = isCloudKitchen ? (item as any).is_coming_soon_cloud_kitchen === true : (item as any).is_coming_soon_home_delivery === true;
 
           return (
             <Card
