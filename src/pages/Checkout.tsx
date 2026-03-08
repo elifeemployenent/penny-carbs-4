@@ -153,8 +153,8 @@ const Checkout: React.FC = () => {
 
       if (itemsError) throw itemsError;
 
-      // For homemade orders, assign cooks based on customer selection from cart
-      if (isHomemade) {
+      // Assign cooks for homemade and cloud_kitchen orders
+      if (isHomemade || serviceType === 'cloud_kitchen') {
         // Use cart items from context which already have selected_cook_id
         const cartCookMap = new Map<string, string>();
         items.forEach((item) => {
@@ -205,15 +205,24 @@ const Checkout: React.FC = () => {
             .eq('food_item_id', foodItemId);
         }
 
-        // Update order with first cook as primary assigned (for backwards compatibility)
+        // Update order with first cook's user_id as primary assigned
+        // orders.assigned_cook_id references auth.users(id), so we need user_id not cook id
         if (uniqueCookIds.length > 0) {
-          await supabase
-            .from('orders')
-            .update({ 
-              assigned_cook_id: uniqueCookIds[0],
-              cook_assignment_status: 'pending',
-            })
-            .eq('id', order.id);
+          const { data: cookData } = await supabase
+            .from('cooks')
+            .select('user_id')
+            .eq('id', uniqueCookIds[0])
+            .maybeSingle();
+
+          if (cookData?.user_id) {
+            await supabase
+              .from('orders')
+              .update({ 
+                assigned_cook_id: cookData.user_id,
+                cook_assignment_status: 'pending',
+              })
+              .eq('id', order.id);
+          }
         }
       }
 
