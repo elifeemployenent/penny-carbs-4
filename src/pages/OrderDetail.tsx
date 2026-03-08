@@ -294,6 +294,41 @@ const OrderDetail: React.FC = () => {
           </CardContent>
         </Card>
 
+        {/* Kitchen Details */}
+        {Object.keys(cooksMap).length > 0 && (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <ChefHat className="h-4 w-4" />
+                Kitchen Details
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 pt-0">
+              <div className="space-y-3">
+                {Object.values(cooksMap).map((cook) => (
+                  <div key={cook.id} className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-sm">{cook.kitchen_name}</p>
+                      {cook.rating != null && cook.rating > 0 && (
+                        <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                          ⭐ {Number(cook.rating).toFixed(1)} rating
+                        </p>
+                      )}
+                    </div>
+                    <a
+                      href={`tel:${cook.mobile_number}`}
+                      className="flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary"
+                    >
+                      <Phone className="h-3 w-3" />
+                      Call
+                    </a>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Delivery Info */}
         {order.delivery_address && (
           <Card>
