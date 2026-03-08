@@ -46,6 +46,7 @@ import AdminNavbar from '@/components/admin/AdminNavbar';
 import ImageUpload from '@/components/admin/ImageUpload';
 import ComboFoodsTab from '@/components/admin/ComboFoodsTab';
 import { calculatePlatformMargin } from '@/lib/priceUtils';
+import ViewItemCooksDialog from '@/components/admin/ViewItemCooksDialog';
 
 // Helper to calculate customer price
 const getCustomerPrice = (item: FoodItemWithImages): number => {
