@@ -891,14 +891,13 @@ const AdminItems: React.FC = () => {
 
                     {/* Manual Round Off */}
                     <div className="border-t border-border pt-2 space-y-2">
-                      <Label className="text-xs text-muted-foreground">Round off customer price</Label>
+                      <Label className="text-xs font-medium">Round off customer price</Label>
                       <div className="flex items-center gap-2">
                         <Input
                           type="number"
                           min={basePrice}
-                          placeholder={Math.round(calculatedCustomerPrice).toString()}
-                          className="h-8 text-sm"
-                          defaultValue=""
+                          value={Math.round(calculatedCustomerPrice)}
+                          className="h-8 text-sm w-24"
                           onChange={(e) => {
                             const roundedPrice = parseFloat(e.target.value);
                             if (!isNaN(roundedPrice) && roundedPrice >= basePrice) {
@@ -911,13 +910,19 @@ const AdminItems: React.FC = () => {
                             }
                           }}
                         />
-                        <div className="flex gap-1 flex-shrink-0">
-                          {[1, 5, 10].map((r) => {
-                            const rounded = Math.ceil(calculatedCustomerPrice / r) * r;
-                            if (rounded === calculatedCustomerPrice) return null;
-                            return (
+                        <div className="flex gap-1 flex-wrap">
+                          {[
+                            Math.ceil(calculatedCustomerPrice),
+                            Math.ceil(calculatedCustomerPrice / 5) * 5,
+                            Math.ceil(calculatedCustomerPrice / 10) * 10,
+                            Math.round(calculatedCustomerPrice / 50) * 50,
+                            Math.ceil(calculatedCustomerPrice / 50) * 50,
+                          ]
+                            .filter((v, i, arr) => v !== calculatedCustomerPrice && v >= basePrice && arr.indexOf(v) === i)
+                            .slice(0, 3)
+                            .map((rounded) => (
                               <Button
-                                key={r}
+                                key={rounded}
                                 type="button"
                                 variant="outline"
                                 size="sm"
@@ -933,8 +938,7 @@ const AdminItems: React.FC = () => {
                               >
                                 ₹{rounded}
                               </Button>
-                            );
-                          })}
+                            ))}
                         </div>
                       </div>
                     </div>
