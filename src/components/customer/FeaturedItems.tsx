@@ -14,6 +14,7 @@ import { Plus, Star, Percent } from 'lucide-react';
 import { calculatePlatformMargin } from '@/lib/priceUtils';
 import { useCookAllocatedItemIds } from '@/hooks/useCookAllocatedItems';
 import { useLowestCookPrices } from '@/hooks/useLowestCookPrices';
+import { useActiveCloudKitchenSlotIds } from '@/hooks/useCloudKitchenSlots';
 
 interface FeaturedItem {
   id: string;

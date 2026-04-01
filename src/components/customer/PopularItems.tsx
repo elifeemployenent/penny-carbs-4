@@ -62,7 +62,7 @@ const PopularItems: React.FC<PopularItemsProps> = ({
   const { requireAuth, showLoginDialog, setShowLoginDialog, onLoginSuccess } = useAuthCheck();
   const { data: allocatedIds, isLoading: allocatedIdsLoading } = useCookAllocatedItemIds(selectedPanchayat?.id);
   const { lowestCookPrices } = useLowestCookPrices();
-  const [items, setItems] = useState<FoodItemWithImages[]>([]);
+  const { data: activeSlotIds } = useActiveCloudKitchenSlotIds();
   const [isLoading, setIsLoading] = useState(true);
 
   // For homemade, wait for allocatedIds to load before fetching
