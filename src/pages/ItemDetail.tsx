@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useCart } from '@/contexts/CartContext';
+import { useLocation } from '@/contexts/LocationContext';
 import type { FoodItemWithImages } from '@/types/database';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
