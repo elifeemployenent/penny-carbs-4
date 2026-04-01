@@ -805,16 +805,29 @@ const AdminCooks: React.FC = () => {
                       <p className="text-sm text-muted-foreground">
                         ⭐ {cook.rating?.toFixed(1) || '0.0'} • {cook.total_orders || 0} orders
                       </p>
-                      <Button
-                        size="sm"
-                        variant={cook.is_active ? "destructive" : "default"}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleCookStatus(cook.id, cook.is_active);
-                        }}
-                      >
-                        {cook.is_active ? "Deactivate" : "Activate"}
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenEdit(cook);
+                          }}
+                        >
+                          <Edit className="h-3.5 w-3.5 mr-1" />
+                          Edit
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant={cook.is_active ? "destructive" : "default"}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleCookStatus(cook.id, cook.is_active);
+                          }}
+                        >
+                          {cook.is_active ? "Deactivate" : "Activate"}
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
