@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Calendar, ChefHat, Home } from 'lucide-react';
 import type { ServiceType } from '@/types/database';
+import { useActiveServiceTypes } from '@/hooks/useServiceModules';
 
 interface ServiceCardData {
   id: ServiceType;
