@@ -62,7 +62,7 @@ const ItemDetail: React.FC = () => {
               id,
               cook_id,
               custom_price,
-              cooks!inner(id, kitchen_name, rating, total_orders, is_active, is_available)
+              cooks!inner(id, kitchen_name, rating, total_orders, is_active, is_available, panchayat_id, assigned_panchayat_ids)
             `)
             .eq('food_item_id', itemId);
 
