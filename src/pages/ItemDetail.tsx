@@ -28,6 +28,7 @@ const ItemDetail: React.FC = () => {
   const [quantity, setQuantity] = useState(1);
   const [availableCooks, setAvailableCooks] = useState<CookOption[]>([]);
   const [selectedCookId, setSelectedCookId] = useState<string | null>(null);
+  const { selectedPanchayat } = useLocation();
 
   const cartItem = cartItems.find(ci => ci.food_item_id === itemId);
   const currentCartQuantity = cartItem?.quantity || 0;
