@@ -47,7 +47,11 @@ const getCustomerPrice = (item: FeaturedItem, lowestCookPrices?: Map<string, num
   return basePrice + margin;
 };
 
-const FeaturedItems: React.FC = () => {
+interface FeaturedItemsProps {
+  activeServiceTypes?: string[];
+}
+
+const FeaturedItems: React.FC<FeaturedItemsProps> = ({ activeServiceTypes }) => {
   const navigate = useNavigate();
   const { addToCart } = useCart();
   const { selectedPanchayat } = useLocation();
