@@ -310,7 +310,7 @@ const ItemDetail: React.FC = () => {
             size="icon"
             className="rounded-full bg-card/90 shadow-md backdrop-blur"
             onClick={() => {
-              const url = window.location.href;
+              const url = `${window.location.origin}/item/${itemId}`;
               const text = `Check out ${item?.name || 'this item'}! ${url}`;
               window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
             }}
