@@ -83,6 +83,7 @@ const CustomerLoginDialog: React.FC<CustomerLoginDialogProps> = ({
   const { panchayats, getWardsForPanchayat, isLoading: locationLoading } = useLocation();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState('login');
+  const [isSignupMode, setIsSignupMode] = useState(false);
 
   const loginForm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -132,10 +133,10 @@ const CustomerLoginDialog: React.FC<CustomerLoginDialogProps> = ({
         if (error.message.includes('not found')) {
           toast({
             title: 'Account not found',
-            description: 'Please register first to continue',
+            description: 'Please complete registration to continue',
             variant: 'destructive',
           });
-          setActiveTab('signup');
+          setIsSignupMode(true);
           signupForm.setValue('mobileNumber', data.mobileNumber);
         } else {
           toast({
@@ -328,128 +329,136 @@ const CustomerLoginDialog: React.FC<CustomerLoginDialogProps> = ({
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="login" className="text-xs">Customer</TabsTrigger>
-            <TabsTrigger value="signup" className="text-xs">New User</TabsTrigger>
-            <TabsTrigger value="staff" className="text-xs">Staff</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="login">Customer Login</TabsTrigger>
+            <TabsTrigger value="staff">Staff Login</TabsTrigger>
           </TabsList>
 
-          {/* Customer Login Tab */}
+          {/* Customer Login Tab - shows login form, auto-switches to signup if not found */}
           <TabsContent value="login" className="mt-4">
-            <Form {...loginForm}>
-              <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-4">
-                <FormField
-                  control={loginForm.control}
-                  name="mobileNumber"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Mobile Number</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                          <Input placeholder="Enter 10-digit mobile number" className="pl-10" {...field} />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Button type="submit" className="w-full" disabled={isSubmitting}>
-                  {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Continue
-                </Button>
-              </form>
-            </Form>
-          </TabsContent>
-
-          {/* Signup Tab */}
-          <TabsContent value="signup" className="mt-4">
-            <Form {...signupForm}>
-              <form onSubmit={signupForm.handleSubmit(handleSignup)} className="space-y-3">
-                <FormField
-                  control={signupForm.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Full Name</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                          <Input placeholder="Enter your name" className="pl-10" {...field} />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={signupForm.control}
-                  name="mobileNumber"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Mobile Number</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                          <Input placeholder="Enter 10-digit mobile number" className="pl-10" {...field} />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <div className="grid grid-cols-2 gap-3">
+            {activeTab === 'login' && !isSignupMode ? (
+              <Form {...loginForm}>
+                <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-4">
                   <FormField
-                    control={signupForm.control}
-                    name="panchayatId"
+                    control={loginForm.control}
+                    name="mobileNumber"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Panchayat</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent className="bg-popover">
-                            {panchayats.map((p) => (
-                              <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <FormLabel>Mobile Number</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                            <Input placeholder="Enter 10-digit mobile number" className="pl-10" {...field} />
+                          </div>
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                  <FormField
-                    control={signupForm.control}
-                    name="wardNumber"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Ward</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value} disabled={!selectedPanchayatId}>
+                  <Button type="submit" className="w-full" disabled={isSubmitting}>
+                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Continue
+                  </Button>
+                </form>
+              </Form>
+            ) : activeTab === 'login' && isSignupMode ? (
+              <div>
+                <p className="text-sm text-muted-foreground mb-3">
+                  No account found. Please complete registration.
+                </p>
+                <Form {...signupForm}>
+                  <form onSubmit={signupForm.handleSubmit(handleSignup)} className="space-y-3">
+                    <FormField
+                      control={signupForm.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Full Name</FormLabel>
                           <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select" />
-                            </SelectTrigger>
+                            <div className="relative">
+                              <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                              <Input placeholder="Enter your name" className="pl-10" {...field} />
+                            </div>
                           </FormControl>
-                          <SelectContent className="bg-popover max-h-48">
-                            {availableWards.map((wardNum) => (
-                              <SelectItem key={wardNum} value={wardNum.toString()}>Ward {wardNum}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                <Button type="submit" className="w-full" disabled={isSubmitting || locationLoading}>
-                  {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Create Account
-                </Button>
-              </form>
-            </Form>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={signupForm.control}
+                      name="mobileNumber"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Mobile Number</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                              <Input placeholder="Enter 10-digit mobile number" className="pl-10" {...field} disabled />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <div className="grid grid-cols-2 gap-3">
+                      <FormField
+                        control={signupForm.control}
+                        name="panchayatId"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Panchayat</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent className="bg-popover">
+                                {panchayats.map((p) => (
+                                  <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={signupForm.control}
+                        name="wardNumber"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Ward</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value} disabled={!selectedPanchayatId}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent className="bg-popover max-h-48">
+                                {availableWards.map((wardNum) => (
+                                  <SelectItem key={wardNum} value={wardNum.toString()}>Ward {wardNum}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <Button type="button" variant="outline" className="flex-1" onClick={() => setIsSignupMode(false)}>
+                        Back
+                      </Button>
+                      <Button type="submit" className="flex-1" disabled={isSubmitting || locationLoading}>
+                        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Create Account
+                      </Button>
+                    </div>
+                  </form>
+                </Form>
+              </div>
+            ) : null}
           </TabsContent>
 
           {/* Staff Quick Access Tab */}
@@ -460,7 +469,7 @@ const CustomerLoginDialog: React.FC<CustomerLoginDialogProps> = ({
                 <p className="text-xs text-muted-foreground">
                   Staff can browse as customers without credentials. Dashboard access requires full login via{' '}
                   <Button variant="link" className="h-auto p-0 text-xs" onClick={() => navigate('/auth')}>
-                    Staff Login
+                    Staff Portal
                   </Button>
                 </p>
               </div>
