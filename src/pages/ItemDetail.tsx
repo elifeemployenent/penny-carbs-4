@@ -404,7 +404,7 @@ const ItemDetail: React.FC = () => {
 
         {/* Cook selection hint */}
         {needsCookSelection && (
-          <p className="mt-2 text-sm text-amber-600 font-medium">
+          <p className="mt-2 text-sm text-destructive font-medium">
             ⚠️ Please select a cook above to add to cart
           </p>
         )}
