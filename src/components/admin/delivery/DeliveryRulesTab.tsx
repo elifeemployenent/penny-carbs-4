@@ -237,19 +237,6 @@ const DeliveryRulesTab: React.FC = () => {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label>Free Delivery Above (₹) <span className="text-muted-foreground text-xs">Optional</span></Label>
-                <Input
-                  type="number"
-                  min="0"
-                  placeholder="Leave empty if not applicable"
-                  value={form.free_delivery_above ?? ''}
-                  onChange={(e) => setForm(prev => ({
-                    ...prev,
-                    free_delivery_above: e.target.value ? Number(e.target.value) : null,
-                  }))}
-                />
-              </div>
 
               <div className="space-y-2">
                 <Label>Per KM Charge (₹) <span className="text-muted-foreground text-xs">Optional</span></Label>
