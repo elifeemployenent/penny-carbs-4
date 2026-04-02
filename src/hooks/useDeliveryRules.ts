@@ -23,6 +23,7 @@ export interface DeliveryRuleInput {
   free_delivery_above?: number | null;
   per_km_charge?: number | null;
   max_delivery_charge?: number | null;
+  charge_above_threshold?: number | null;
   is_active?: boolean;
 }
 

@@ -808,6 +808,7 @@ export type Database = {
       }
       delivery_rules: {
         Row: {
+          charge_above_threshold: number | null
           created_at: string
           free_delivery_above: number | null
           id: string
@@ -820,6 +821,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          charge_above_threshold?: number | null
           created_at?: string
           free_delivery_above?: number | null
           id?: string
@@ -832,6 +834,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          charge_above_threshold?: number | null
           created_at?: string
           free_delivery_above?: number | null
           id?: string
