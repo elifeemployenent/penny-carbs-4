@@ -71,6 +71,8 @@ interface CustomerLoginDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onLoginSuccess?: () => void;
+  title?: string;
+  message?: string;
 }
 
 const CustomerLoginDialog: React.FC<CustomerLoginDialogProps> = ({
