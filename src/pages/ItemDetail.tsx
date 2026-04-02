@@ -20,12 +20,13 @@ import { toast } from 'sonner';
 import { calculatePlatformMargin } from '@/lib/priceUtils';
 import CookSelector, { type CookOption } from '@/components/customer/CookSelector';
 import PendingCartDialog from '@/components/customer/PendingCartDialog';
+import CustomerLoginDialog from '@/components/customer/CustomerLoginDialog';
 
 const ItemDetail: React.FC = () => {
   const { itemId } = useParams<{ itemId: string }>();
   const navigate = useNavigate();
   const { addToCart, items: cartItems, updateQuantity, clearCart } = useCart();
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   
   const [item, setItem] = useState<FoodItemWithImages | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -35,7 +36,15 @@ const ItemDetail: React.FC = () => {
   const [selectedCookId, setSelectedCookId] = useState<string | null>(null);
   const [showPendingCartDialog, setShowPendingCartDialog] = useState(false);
   const [pendingAction, setPendingAction] = useState<'add' | 'buy' | null>(null);
+  const [showLoginDialog, setShowLoginDialog] = useState(false);
   const { selectedPanchayat } = useLocation();
+
+  // Show login dialog for unauthenticated users accessing via shareable link
+  useEffect(() => {
+    if (!authLoading && !user) {
+      setShowLoginDialog(true);
+    }
+  }, [authLoading, user]);
 
   const cartItem = cartItems.find(ci => ci.food_item_id === itemId);
   const currentCartQuantity = cartItem?.quantity || 0;
@@ -563,6 +572,16 @@ const ItemDetail: React.FC = () => {
           setShowPendingCartDialog(false);
           navigate('/cart');
         }}
+      />
+
+      {/* Login Dialog for unauthenticated users */}
+      <CustomerLoginDialog
+        open={showLoginDialog}
+        onOpenChange={(open) => {
+          setShowLoginDialog(open);
+        }}
+        title="ലോഗിൻ ആവശ്യമാണ്"
+        message="മൊബൈൽ നമ്പറും പഞ്ചായത്തും നൽകിയാൽ മാത്രമേ നിങ്ങളുടെ പരിസരത്തു ഡെലിവറി ഉണ്ടോ എന്ന് മനസ്സിലാക്കൂ"
       />
     </div>
   );

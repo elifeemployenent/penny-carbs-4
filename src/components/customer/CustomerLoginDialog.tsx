@@ -71,12 +71,16 @@ interface CustomerLoginDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onLoginSuccess?: () => void;
+  title?: string;
+  message?: string;
 }
 
 const CustomerLoginDialog: React.FC<CustomerLoginDialogProps> = ({
   open,
   onOpenChange,
   onLoginSuccess,
+  title,
+  message,
 }) => {
   const navigate = useNavigate();
   const { customerSignIn, customerSignUp } = useAuth();
@@ -324,8 +328,8 @@ const CustomerLoginDialog: React.FC<CustomerLoginDialogProps> = ({
           <div className="flex justify-center mb-2">
             <img src={logo} alt="Penny Carbs" className="h-12 w-auto" />
           </div>
-          <DialogTitle>Login Required</DialogTitle>
-          <DialogDescription>Please login to view dish details and place orders</DialogDescription>
+          <DialogTitle>{title || 'Login Required'}</DialogTitle>
+          <DialogDescription>{message || 'Please login to view dish details and place orders'}</DialogDescription>
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
