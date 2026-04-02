@@ -30,7 +30,7 @@ const PendingCartBanner: React.FC = () => {
         <Button
           size="sm"
           variant="secondary"
-          className="h-7 text-xs px-2.5"
+          className="h-7 text-xs px-2.5 bg-green-800 text-white hover:bg-green-900"
           onClick={() => navigate('/cart')}
         >
           View Cart
