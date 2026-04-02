@@ -92,6 +92,7 @@ const AdminDashboard: React.FC = () => {
   ];
 
   const commonUtilities = [
+    { icon: ClipboardList, label: 'All Orders', path: '/admin/orders', description: 'Order History' },
     { icon: FolderOpen, label: 'Categories', path: '/admin/categories', description: 'Dish Categories' },
     { icon: Utensils, label: 'Food Items', path: '/admin/items', description: 'Manage Dishes' },
     { icon: ChefHat, label: 'Cook Management', path: '/admin/cooks', description: 'Add & Manage Cooks' },
