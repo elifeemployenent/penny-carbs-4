@@ -67,6 +67,7 @@ const DeliveryRulesTab: React.FC = () => {
       free_delivery_above: rule.free_delivery_above,
       per_km_charge: rule.per_km_charge,
       max_delivery_charge: rule.max_delivery_charge,
+      charge_above_threshold: rule.charge_above_threshold,
       is_active: rule.is_active,
     });
     setIsDialogOpen(true);
