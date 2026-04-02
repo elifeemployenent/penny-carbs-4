@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useServiceModuleGuard } from '@/hooks/useServiceModuleGuard';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocation } from '@/contexts/LocationContext';
