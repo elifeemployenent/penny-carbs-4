@@ -138,7 +138,7 @@ const AdminStorageSettings: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <AdminNavbar title="Storage Settings" backPath="/admin" />
+      <AdminNavbar />
 
       <main className="p-4 pb-20">
         <div className="mb-6 flex items-center justify-between">
