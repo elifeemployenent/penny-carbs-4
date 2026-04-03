@@ -8,7 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Package, Clock, CheckCircle, XCircle, Truck, Search, AlertTriangle, ChevronDown, MapPin, User, UtensilsCrossed, Phone } from 'lucide-react';
+import { Package, Clock, CheckCircle, XCircle, Truck, Search, AlertTriangle, ChevronDown, MapPin, User, UtensilsCrossed, Phone, MessageCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
