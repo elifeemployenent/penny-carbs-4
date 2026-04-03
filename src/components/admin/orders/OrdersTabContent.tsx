@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { Package, Clock, CheckCircle, XCircle, Truck, Search, AlertTriangle } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Package, Clock, CheckCircle, XCircle, Truck, Search, AlertTriangle, ChevronDown, MapPin, User, UtensilsCrossed, Phone } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -19,12 +20,31 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 interface OrderWithProfile extends Order {
   profiles?: {
     name: string;
     mobile_number: string;
   };
+}
+
+interface OrderItemDetail {
+  id: string;
+  food_item_id: string;
+  quantity: number;
+  unit_price: number;
+  total_price: number;
+  special_instructions: string | null;
+  food_item?: { name: string };
+  assigned_cook?: { kitchen_name: string; mobile_number: string } | null;
+}
+
+interface OrderDetail {
+  items: OrderItemDetail[];
+  cook?: { kitchen_name: string; mobile_number: string } | null;
+  delivery_staff?: { name: string; mobile_number: string; vehicle_type: string } | null;
+  panchayat?: { name: string } | null;
 }
 
 const statusConfig: Record<OrderStatus, { label: string; color: string; icon: React.ReactNode }> = {
@@ -49,6 +69,9 @@ const OrdersTabContent: React.FC<OrdersTabContentProps> = ({ serviceType }) => {
   const [statusFilter, setStatusFilter] = useState<OrderStatus | 'all'>('all');
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [orderToCancel, setOrderToCancel] = useState<OrderWithProfile | null>(null);
+  const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
+  const [orderDetails, setOrderDetails] = useState<Record<string, OrderDetail>>({});
+  const [loadingDetails, setLoadingDetails] = useState<Record<string, boolean>>({});
 
   const fetchOrders = async () => {
     setIsLoading(true);
@@ -90,6 +113,92 @@ const OrdersTabContent: React.FC<OrdersTabContentProps> = ({ serviceType }) => {
       toast({ title: 'Error', description: 'Failed to fetch orders', variant: 'destructive' });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchOrderDetails = async (order: OrderWithProfile) => {
+    if (orderDetails[order.id]) return;
+    setLoadingDetails(prev => ({ ...prev, [order.id]: true }));
+    try {
+      // Fetch order items with food item names
+      const { data: items } = await supabase
+        .from('order_items')
+        .select('id, food_item_id, quantity, unit_price, total_price, special_instructions, assigned_cook_id')
+        .eq('order_id', order.id);
+
+      const enrichedItems: OrderItemDetail[] = await Promise.all(
+        (items || []).map(async (item) => {
+          const { data: foodItem } = await supabase
+            .from('food_items')
+            .select('name')
+            .eq('id', item.food_item_id)
+            .single();
+
+          let assigned_cook = null;
+          if (item.assigned_cook_id) {
+            const { data: cookData } = await supabase
+              .from('cooks')
+              .select('kitchen_name, mobile_number')
+              .eq('id', item.assigned_cook_id)
+              .single();
+            assigned_cook = cookData;
+          }
+
+          return {
+            ...item,
+            food_item: foodItem || undefined,
+            assigned_cook,
+          };
+        })
+      );
+
+      // Fetch assigned cook
+      let cook = null;
+      if (order.assigned_cook_id) {
+        const { data: cookData } = await supabase
+          .from('cooks')
+          .select('kitchen_name, mobile_number')
+          .eq('id', order.assigned_cook_id)
+          .single();
+        cook = cookData;
+      }
+
+      // Fetch delivery staff
+      let delivery_staff = null;
+      if (order.assigned_delivery_id) {
+        const { data: dsData } = await supabase
+          .from('delivery_staff')
+          .select('name, mobile_number, vehicle_type')
+          .eq('id', order.assigned_delivery_id)
+          .single();
+        delivery_staff = dsData;
+      }
+
+      // Fetch panchayat
+      let panchayat = null;
+      const { data: pData } = await supabase
+        .from('panchayats')
+        .select('name')
+        .eq('id', order.panchayat_id)
+        .single();
+      panchayat = pData;
+
+      setOrderDetails(prev => ({
+        ...prev,
+        [order.id]: { items: enrichedItems, cook, delivery_staff, panchayat },
+      }));
+    } catch (error) {
+      console.error('Error fetching order details:', error);
+    } finally {
+      setLoadingDetails(prev => ({ ...prev, [order.id]: false }));
+    }
+  };
+
+  const handleToggleExpand = (order: OrderWithProfile) => {
+    const isExpanding = expandedOrderId !== order.id;
+    setExpandedOrderId(isExpanding ? order.id : null);
+    if (isExpanding) {
+      fetchOrderDetails(order);
     }
   };
 
@@ -170,98 +279,263 @@ const OrdersTabContent: React.FC<OrdersTabContentProps> = ({ serviceType }) => {
         <div className="space-y-4">
           {filteredOrders.map((order) => {
             const status = statusConfig[order.status];
+            const isExpanded = expandedOrderId === order.id;
+            const details = orderDetails[order.id];
+            const isDetailsLoading = loadingDetails[order.id];
 
             return (
-              <Card key={order.id}>
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="font-semibold">#{order.order_number}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {order.profiles?.name || 'Unknown Customer'}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {order.profiles?.mobile_number}
-                      </p>
-                    </div>
-                    <div className="flex flex-col items-end gap-1">
-                      <Badge className={`gap-1 ${status.color}`}>
-                        {status.icon}
-                        {status.label}
-                      </Badge>
-                      {!serviceType && (
-                        <span className="text-xs text-muted-foreground capitalize">
-                          {order.service_type.replace('_', ' ')}
+              <Collapsible key={order.id} open={isExpanded} onOpenChange={() => handleToggleExpand(order)}>
+                <Card>
+                  <CardContent className="p-4">
+                    <CollapsibleTrigger asChild>
+                      <div className="flex items-start justify-between cursor-pointer">
+                        <div>
+                          <p className="font-semibold">#{order.order_number}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {order.profiles?.name || 'Unknown Customer'}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {order.profiles?.mobile_number}
+                          </p>
+                        </div>
+                        <div className="flex flex-col items-end gap-1">
+                          <Badge className={`gap-1 ${status.color}`}>
+                            {status.icon}
+                            {status.label}
+                          </Badge>
+                          {!serviceType && (
+                            <span className="text-xs text-muted-foreground capitalize">
+                              {order.service_type.replace('_', ' ')}
+                            </span>
+                          )}
+                          <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                        </div>
+                      </div>
+                    </CollapsibleTrigger>
+
+                    <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
+                      <div>
+                        <span className="text-muted-foreground">Amount: </span>
+                        <span className="font-semibold">₹{order.total_amount}</span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Date: </span>
+                        <span>
+                          {new Date(order.created_at).toLocaleDateString('en-IN', {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric',
+                          })}
                         </span>
-                      )}
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
-                    <div>
-                      <span className="text-muted-foreground">Amount: </span>
-                      <span className="font-semibold">₹{order.total_amount}</span>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Date: </span>
-                      <span>
-                        {new Date(order.created_at).toLocaleDateString('en-IN', {
-                          day: 'numeric',
-                          month: 'short',
-                          year: 'numeric',
-                        })}
-                      </span>
-                    </div>
-                  </div>
+                    {/* Expanded Order Details */}
+                    <CollapsibleContent>
+                      <div className="mt-4 pt-3 border-t space-y-4">
+                        {isDetailsLoading ? (
+                          <div className="space-y-2">
+                            <Skeleton className="h-4 w-full" />
+                            <Skeleton className="h-4 w-3/4" />
+                            <Skeleton className="h-4 w-1/2" />
+                          </div>
+                        ) : details ? (
+                          <>
+                            {/* Order Items */}
+                            <div>
+                              <h4 className="text-sm font-semibold flex items-center gap-1.5 mb-2">
+                                <UtensilsCrossed className="h-4 w-4 text-muted-foreground" />
+                                Items ({details.items.length})
+                              </h4>
+                              <div className="rounded-md border overflow-hidden">
+                                <Table>
+                                  <TableHeader>
+                                    <TableRow>
+                                      <TableHead className="text-xs">Item</TableHead>
+                                      <TableHead className="text-xs text-center">Qty</TableHead>
+                                      <TableHead className="text-xs text-right">Price</TableHead>
+                                      <TableHead className="text-xs text-right">Total</TableHead>
+                                    </TableRow>
+                                  </TableHeader>
+                                  <TableBody>
+                                    {details.items.map((item) => (
+                                      <TableRow key={item.id}>
+                                        <TableCell className="py-2 text-xs">
+                                          <p>{item.food_item?.name || 'Unknown Item'}</p>
+                                          {item.special_instructions && (
+                                            <p className="text-muted-foreground italic mt-0.5">
+                                              "{item.special_instructions}"
+                                            </p>
+                                          )}
+                                          {item.assigned_cook && (
+                                            <p className="text-muted-foreground mt-0.5">
+                                              Cook: {item.assigned_cook.kitchen_name}
+                                            </p>
+                                          )}
+                                        </TableCell>
+                                        <TableCell className="py-2 text-xs text-center">{item.quantity}</TableCell>
+                                        <TableCell className="py-2 text-xs text-right">₹{item.unit_price}</TableCell>
+                                        <TableCell className="py-2 text-xs text-right font-medium">₹{item.total_price}</TableCell>
+                                      </TableRow>
+                                    ))}
+                                  </TableBody>
+                                </Table>
+                              </div>
+                            </div>
 
-                  {/* Status Update Actions */}
-                  <div className="mt-4 pt-3 border-t">
-                    <p className="text-xs text-muted-foreground mb-2">Update Status:</p>
-                    <div className="flex flex-wrap gap-2">
-                      {order.status === 'pending' && (
-                        <>
-                          <Button size="sm" onClick={() => updateOrderStatus(order.id, 'confirmed')}>
-                            Confirm
+                            {/* Amount Breakdown */}
+                            <div className="rounded-md bg-muted/50 p-3 space-y-1 text-sm">
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">Items Total</span>
+                                <span>₹{details.items.reduce((s, i) => s + i.total_price, 0)}</span>
+                              </div>
+                              {(order.delivery_amount ?? 0) > 0 && (
+                                <div className="flex justify-between">
+                                  <span className="text-muted-foreground">Delivery</span>
+                                  <span>₹{order.delivery_amount}</span>
+                                </div>
+                              )}
+                              {(order.service_charge_amount ?? 0) > 0 && (
+                                <div className="flex justify-between">
+                                  <span className="text-muted-foreground">Service Charge</span>
+                                  <span>₹{order.service_charge_amount}</span>
+                                </div>
+                              )}
+                              <div className="flex justify-between font-semibold border-t pt-1 mt-1">
+                                <span>Total</span>
+                                <span>₹{order.total_amount}</span>
+                              </div>
+                            </div>
+
+                            {/* Location & Delivery Info */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              <div className="space-y-2">
+                                <h4 className="text-sm font-semibold flex items-center gap-1.5">
+                                  <MapPin className="h-4 w-4 text-muted-foreground" />
+                                  Location
+                                </h4>
+                                <div className="text-xs space-y-0.5">
+                                  <p>{details.panchayat?.name || 'Unknown'}, Ward {order.ward_number}</p>
+                                  {order.delivery_address && (
+                                    <p className="text-muted-foreground">{order.delivery_address}</p>
+                                  )}
+                                  {order.delivery_instructions && (
+                                    <p className="text-muted-foreground italic">Note: {order.delivery_instructions}</p>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Cook Info */}
+                              {details.cook && (
+                                <div className="space-y-2">
+                                  <h4 className="text-sm font-semibold flex items-center gap-1.5">
+                                    <User className="h-4 w-4 text-muted-foreground" />
+                                    Cook
+                                  </h4>
+                                  <div className="text-xs space-y-0.5">
+                                    <p>{details.cook.kitchen_name}</p>
+                                    <p className="flex items-center gap-1 text-muted-foreground">
+                                      <Phone className="h-3 w-3" />
+                                      {details.cook.mobile_number}
+                                    </p>
+                                    {order.cook_status && (
+                                      <Badge variant="outline" className="text-xs capitalize mt-1">
+                                        {order.cook_status}
+                                      </Badge>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Delivery Staff Info */}
+                              {details.delivery_staff && (
+                                <div className="space-y-2">
+                                  <h4 className="text-sm font-semibold flex items-center gap-1.5">
+                                    <Truck className="h-4 w-4 text-muted-foreground" />
+                                    Delivery
+                                  </h4>
+                                  <div className="text-xs space-y-0.5">
+                                    <p>{details.delivery_staff.name}</p>
+                                    <p className="flex items-center gap-1 text-muted-foreground">
+                                      <Phone className="h-3 w-3" />
+                                      {details.delivery_staff.mobile_number}
+                                    </p>
+                                    <p className="text-muted-foreground capitalize">{details.delivery_staff.vehicle_type}</p>
+                                    {order.delivery_status && (
+                                      <Badge variant="outline" className="text-xs capitalize mt-1">
+                                        {order.delivery_status}
+                                      </Badge>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Event Details (for indoor events) */}
+                              {order.event_date && (
+                                <div className="space-y-2">
+                                  <h4 className="text-sm font-semibold">Event</h4>
+                                  <div className="text-xs space-y-0.5">
+                                    <p>Date: {new Date(order.event_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                                    {order.guest_count && <p>Guests: {order.guest_count}</p>}
+                                    {order.event_details && <p className="text-muted-foreground">{order.event_details}</p>}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </>
+                        ) : null}
+                      </div>
+                    </CollapsibleContent>
+
+                    {/* Status Update Actions */}
+                    <div className="mt-4 pt-3 border-t">
+                      <p className="text-xs text-muted-foreground mb-2">Update Status:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {order.status === 'pending' && (
+                          <>
+                            <Button size="sm" onClick={() => updateOrderStatus(order.id, 'confirmed')}>
+                              Confirm
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => {
+                                setOrderToCancel(order);
+                                setCancelDialogOpen(true);
+                              }}
+                            >
+                              Cancel
+                            </Button>
+                          </>
+                        )}
+                        {order.status === 'confirmed' && (
+                          <Button size="sm" onClick={() => updateOrderStatus(order.id, 'preparing')}>
+                            Start Preparing
                           </Button>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => {
-                              setOrderToCancel(order);
-                              setCancelDialogOpen(true);
-                            }}
-                          >
-                            Cancel
+                        )}
+                        {order.status === 'preparing' && (
+                          <Button size="sm" onClick={() => updateOrderStatus(order.id, 'ready')}>
+                            Mark Ready
                           </Button>
-                        </>
-                      )}
-                      {order.status === 'confirmed' && (
-                        <Button size="sm" onClick={() => updateOrderStatus(order.id, 'preparing')}>
-                          Start Preparing
-                        </Button>
-                      )}
-                      {order.status === 'preparing' && (
-                        <Button size="sm" onClick={() => updateOrderStatus(order.id, 'ready')}>
-                          Mark Ready
-                        </Button>
-                      )}
-                      {order.status === 'ready' && (
-                        <Button size="sm" onClick={() => updateOrderStatus(order.id, 'out_for_delivery')}>
-                          Out for Delivery
-                        </Button>
-                      )}
-                      {order.status === 'out_for_delivery' && (
-                        <Button size="sm" onClick={() => updateOrderStatus(order.id, 'delivered')}>
-                          Mark Delivered
-                        </Button>
-                      )}
-                      {['delivered', 'cancelled'].includes(order.status) && (
-                        <span className="text-sm text-muted-foreground italic">Order completed</span>
-                      )}
+                        )}
+                        {order.status === 'ready' && (
+                          <Button size="sm" onClick={() => updateOrderStatus(order.id, 'out_for_delivery')}>
+                            Out for Delivery
+                          </Button>
+                        )}
+                        {order.status === 'out_for_delivery' && (
+                          <Button size="sm" onClick={() => updateOrderStatus(order.id, 'delivered')}>
+                            Mark Delivered
+                          </Button>
+                        )}
+                        {['delivered', 'cancelled'].includes(order.status) && (
+                          <span className="text-sm text-muted-foreground italic">Order completed</span>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </Collapsible>
             );
           })}
         </div>
