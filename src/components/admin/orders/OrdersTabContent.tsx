@@ -27,6 +27,8 @@ interface OrderWithProfile extends Order {
     name: string;
     mobile_number: string;
   };
+  service_charge_amount?: number | null;
+  guest_count?: number | null;
 }
 
 interface OrderItemDetail {
