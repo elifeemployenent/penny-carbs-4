@@ -454,9 +454,11 @@ const OrdersTabContent: React.FC<OrdersTabContentProps> = ({ serviceType }) => {
                                   </h4>
                                   <div className="text-xs space-y-0.5">
                                     <p>{details.cook.kitchen_name}</p>
-                                    <p className="flex items-center gap-1 text-muted-foreground">
+                                    <p className="flex items-center gap-1.5 text-muted-foreground">
                                       <Phone className="h-3 w-3" />
                                       {details.cook.mobile_number}
+                                      <a href={`tel:${details.cook.mobile_number}`} className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-primary text-primary-foreground"><Phone className="h-2.5 w-2.5" /></a>
+                                      <a href={`https://wa.me/91${details.cook.mobile_number.replace(/\D/g, '').slice(-10)}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-green-600 text-white"><MessageCircle className="h-2.5 w-2.5" /></a>
                                     </p>
                                     {order.cook_status && (
                                       <Badge variant="outline" className="text-xs capitalize mt-1">
